@@ -1,0 +1,24 @@
+//* Variables
+//* Colors
+
+//* Variables (Bootstrap 5 + custom)
+$custom-secondary-color: maroon;
+$app-background-color: whitesmoke;
+$primary-color: #0d6efd;
+$success-color: #198754;
+$danger-color: #dc3545;
+$warning-color: #f6be00;
+$secondary-color: #6c757d;
+$dark-color: #212529;
+$shadow-color: #21252980;
+
+//* Other values
+$constantHeaderHeight: 75px;
+$constantFooterHeight: 57px;
+
+:export {
+  customSecondaryColor: $custom-secondary-color;
+  primaryColor: $primary-color;
+  secondaryColor: $secondary-color;
+  darkColor: $dark-color;
+}

@@ -1,0 +1,91 @@
+<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" version="1.1">
+  <g id="coronavirus-covid19-virus-calendar-day">
+    <path
+      d="M57,9H51v3a3,3,0,0,1-6,0V9H19v3a3,3,0,0,1-6,0V9H7a4,4,0,0,0-4,4v8H61V13A4,4,0,0,0,57,9Z"
+      style="fill: #9bc9ff"
+    />
+    <rect height="4" rx="1" style="fill: #9bc9ff" width="4" x="18" y="29" />
+    <rect height="4" rx="1" style="fill: #9bc9ff" width="4" x="26" y="29" />
+    <rect height="4" rx="1" style="fill: #9bc9ff" width="4" x="34" y="29" />
+    <rect height="4" rx="1" style="fill: #9bc9ff" width="4" x="34" y="37" />
+    <rect height="4" rx="1" style="fill: #9bc9ff" width="4" x="42" y="29" />
+    <rect height="4" rx="1" style="fill: #9bc9ff" width="4" x="50" y="29" />
+    <rect height="4" rx="1" style="fill: #9bc9ff" width="4" x="18" y="37" />
+    <rect height="4" rx="1" style="fill: #9bc9ff" width="4" x="26" y="37" />
+    <rect height="4" rx="1" style="fill: #9bc9ff" width="4" x="18" y="45" />
+    <rect height="4" rx="1" style="fill: #9bc9ff" width="4" x="10" y="29" />
+    <rect height="4" rx="1" style="fill: #9bc9ff" width="4" x="10" y="37" />
+    <rect height="4" rx="1" style="fill: #9bc9ff" width="4" x="10" y="45" />
+    <rect height="4" rx="1" style="fill: #9bc9ff" width="4" x="26" y="45" />
+    <polygon points="48 52 53 52 53 44 48 52" style="fill: #9bc9ff" />
+    <circle cx="49" cy="49" r="12" style="fill: #9bc9ff" />
+    <path
+      d="M57,8H52V6a4,4,0,0,0-8,0V8H20V6a4,4,0,0,0-8,0V8H7a5,5,0,0,0-5,5V53a5,5,0,0,0,5,5H35a1,1,0,0,0,0-2H7a3.009,3.009,0,0,1-3-3V22H60V39a1,1,0,0,0,2,0V13A5,5,0,0,0,57,8ZM46,6a2,2,0,0,1,4,0v6a2,2,0,0,1-4,0ZM14,6a2,2,0,0,1,4,0v6a2,2,0,0,1-4,0ZM60,20H4V13a3.009,3.009,0,0,1,3-3h5v2a4,4,0,0,0,8,0V10H44v2a4,4,0,0,0,8,0V10h5a3.009,3.009,0,0,1,3,3Z"
+      style="fill: #1e81ce"
+    />
+    <path
+      d="M21,34H19a2,2,0,0,1-2-2V30a2,2,0,0,1,2-2h2a2,2,0,0,1,2,2v2A2,2,0,0,1,21,34Zm-2-4v2h2V30Z"
+      style="fill: #1e81ce"
+    />
+    <path
+      d="M29,34H27a2,2,0,0,1-2-2V30a2,2,0,0,1,2-2h2a2,2,0,0,1,2,2v2A2,2,0,0,1,29,34Zm-2-4v2h2V30Z"
+      style="fill: #1e81ce"
+    />
+    <path
+      d="M37,34H35a2,2,0,0,1-2-2V30a2,2,0,0,1,2-2h2a2,2,0,0,1,2,2v2A2,2,0,0,1,37,34Zm-2-4v2h2V30Z"
+      style="fill: #1e81ce"
+    />
+    <path
+      d="M45,34H43a2,2,0,0,1-2-2V30a2,2,0,0,1,2-2h2a2,2,0,0,1,2,2v2A2,2,0,0,1,45,34Zm-2-4v2h2V30Z"
+      style="fill: #1e81ce"
+    />
+    <path
+      d="M53,34H51a2,2,0,0,1-2-2V30a2,2,0,0,1,2-2h2a2,2,0,0,1,2,2v2A2,2,0,0,1,53,34Zm-2-4v2h2V30Z"
+      style="fill: #1e81ce"
+    />
+    <path
+      d="M21,42H19a2,2,0,0,1-2-2V38a2,2,0,0,1,2-2h2a2,2,0,0,1,2,2v2A2,2,0,0,1,21,42Zm-2-4v2h2V38Z"
+      style="fill: #1e81ce"
+    />
+    <path
+      d="M29,42H27a2,2,0,0,1-2-2V38a2,2,0,0,1,2-2h2a2,2,0,0,1,2,2v2A2,2,0,0,1,29,42Zm-2-4v2h2V38Z"
+      style="fill: #1e81ce"
+    />
+    <path
+      d="M21,50H19a2,2,0,0,1-2-2V46a2,2,0,0,1,2-2h2a2,2,0,0,1,2,2v2A2,2,0,0,1,21,50Zm-2-4v2h2V46Z"
+      style="fill: #1e81ce"
+    />
+    <path
+      d="M13,34H11a2,2,0,0,1-2-2V30a2,2,0,0,1,2-2h2a2,2,0,0,1,2,2v2A2,2,0,0,1,13,34Zm-2-4v2h2V30Z"
+      style="fill: #1e81ce"
+    />
+    <path
+      d="M13,42H11a2,2,0,0,1-2-2V38a2,2,0,0,1,2-2h2a2,2,0,0,1,2,2v2A2,2,0,0,1,13,42Zm-2-4v2h2V38Z"
+      style="fill: #1e81ce"
+    />
+    <path
+      d="M13,50H11a2,2,0,0,1-2-2V46a2,2,0,0,1,2-2h2a2,2,0,0,1,2,2v2A2,2,0,0,1,13,50Zm-2-4v2h2V46Z"
+      style="fill: #1e81ce"
+    />
+    <path
+      d="M29,50H27a2,2,0,0,1-2-2V46a2,2,0,0,1,2-2h2a2,2,0,0,1,2,2v2A2,2,0,0,1,29,50Zm-2-4v2h2V46Z"
+      style="fill: #1e81ce"
+    />
+    <path
+      d="M36,42H35a2,2,0,0,1-2-2V38a2,2,0,0,1,2-2h2a2,2,0,0,1,2,2,1,1,0,0,1-2,0H35v2h1a1,1,0,0,1,0,2Z"
+      style="fill: #1e81ce"
+    />
+    <path
+      d="M49,62A13,13,0,1,1,62,49,13.015,13.015,0,0,1,49,62Zm0-24A11,11,0,1,0,60,49,11.013,11.013,0,0,0,49,38Z"
+      style="fill: #1e81ce"
+    />
+    <path
+      d="M45,55a1,1,0,0,1-1-1V45.869l-1.445.963a1,1,0,0,1-1.11-1.664l3-2A1,1,0,0,1,46,44V54A1,1,0,0,1,45,55Z"
+      style="fill: #1e81ce"
+    />
+    <path
+      d="M53,55a1,1,0,0,1-1-1V53H48a1,1,0,0,1-.848-1.53l5-8A1,1,0,0,1,54,44v7h1a1,1,0,0,1,0,2H54v1A1,1,0,0,1,53,55Zm-3.195-4H52V47.487Z"
+      style="fill: #1e81ce"
+    />
+  </g>
+</svg>

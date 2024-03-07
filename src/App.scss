@@ -1,0 +1,276 @@
+@import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,500;0,700;0,900;1,400;1,500;1,700;1,900&display=swap");
+
+@import "./_App.module";
+@import "../node_modules/bootstrap/scss/functions";
+
+:root {
+  --constantHeaderHeight: #{$constantHeaderHeight};
+  --constantFooterHeight: #{$constantFooterHeight};
+}
+
+* {
+  box-sizing: border-box;
+}
+body,
+html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100vw;
+  font-family: "Roboto", sans-serif;
+  font-size: 100%;
+}
+
+body {
+  background-color: $app-background-color;
+  overflow: hidden;
+}
+
+// Header dropdown z-index
+div.dropdown-menu {
+  z-index: 9999 !important;
+}
+// Header dropdown -> language selector
+div.dropdown-menu-dark {
+  max-width: 8.2rem !important;
+}
+// Header dropdown -> language selector
+div.dropdown button.dropdown-toggle {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  align-content: center;
+}
+// Header settings button
+div.navbar-nav {
+  button {
+    max-width: 8.2rem !important;
+    text-align: left;
+  }
+}
+// Header routes button
+.routes-button {
+  box-shadow: inset 0px 5px 10px 0px $shadow-color;
+  &_clicked {
+    transform: translateY(8px);
+    box-shadow: inset 0px 10px 20px 2px $shadow-color;
+  }
+}
+
+//* ModalBottomInfo - custom dialog
+div.custom-dialog {
+  background-color: inherit;
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  max-height: 50%;
+  top: auto !important;
+}
+//* ModalBottomInfo - custom modal
+div.custom-modal-bottom {
+  max-height: 50%;
+  position: fixed;
+  bottom: 0;
+  .modal-content {
+    .modal-header {
+      padding: 0.5rem 1rem;
+    }
+    background-color: $app-background-color;
+    .modal-body {
+      padding-top: 0.5rem !important;
+      background-color: $app-background-color;
+    }
+    .modal-footer {
+      padding-top: 0.5rem !important;
+      padding-bottom: 0.5rem !important;
+      background-color: $app-background-color;
+    }
+  }
+}
+
+//* ModalSettings - custom dialog
+div.settings-modal-class {
+  color: $app-background-color;
+  background: $secondary-color;
+}
+
+// Fixing react-date-picker
+div.react-calendar {
+  z-index: 19 !important;
+  position: relative;
+  max-width: 260px !important;
+}
+.react-date-picker__calendar--open,
+.react-date-picker__calendar--close {
+  position: absolute;
+  z-index: 19 !important;
+  max-width: 260px !important;
+}
+.react-calendar__navigation {
+  max-width: 260px !important;
+}
+div.react-date-picker__wrapper {
+  border: 1px solid $primary-color !important;
+  border-radius: 8px !important;
+  &:hover {
+    background-color: lightgray;
+  }
+}
+
+//* Map
+// Bus + stop icons
+.bus_icon {
+  background-color: transparent !important;
+}
+.bus_icon_circle {
+  background-color: transparent !important;
+}
+
+//* Map
+// Stop Info
+.span_small {
+  color: $custom-secondary-color;
+  font-size: 0.7rem;
+  font-weight: normal;
+}
+.th_small_padding {
+  padding: 4px 8px 4px 8px !important;
+}
+
+//* OSM Tiles -> grayscale
+.leaflet-grayscale {
+  .leaflet-tile-loaded {
+    filter: grayscale(80%) brightness(106%) saturate(50%);
+  }
+}
+
+// Leaflet Rectangle
+.rectangleClass {
+  cursor: default !important;
+}
+
+// Map Tooltips and Popups
+.span_bold {
+  font-weight: bold;
+}
+.span_maroon {
+  color: $custom-secondary-color;
+}
+
+.leaflet-popup-content-wrapper {
+  z-index: 600 !important;
+  position: relative;
+}
+.leaflet-popup-tip {
+  z-index: 600 !important;
+  border: 1px solid orange;
+  position: relative;
+  background: orange;
+}
+
+.leaflet-tooltip-bottom {
+  z-index: 600 !important;
+  border: 1px solid lightyellow;
+  position: relative;
+  background: lightyellow;
+}
+
+// Link class
+.link_class {
+  cursor: pointer;
+  transition: transform 0.25s ease-out;
+  &:hover {
+    transform: translate(5px, 0);
+  }
+}
+
+// Legend
+.direction_row {
+  cursor: pointer;
+  &:hover {
+    filter: brightness(80%) !important;
+  }
+}
+
+.detailed_list {
+  font-size: small;
+  span {
+    color: $custom-secondary-color;
+    font-weight: bold;
+  }
+  &:hover {
+    filter: brightness(80%) !important;
+  }
+}
+
+//* Departure table - separate link
+thead.departure_table {
+  tr {
+    th {
+      vertical-align: middle;
+      padding: 0.9em 1.5em;
+      font-size: 1.25em;
+      font-weight: bold;
+      line-height: 1.25em;
+    }
+  }
+}
+
+tbody.departure_table {
+  tr {
+    border: 1px solid rgba(150, 150, 150, 0.3);
+    height: 9rem;
+    th.departure_table_line {
+      font-size: 2.5em;
+      border-right: 2px solid rgb(150, 150, 150);
+      vertical-align: middle;
+      text-align: center;
+      background-color: white;
+      color: black;
+      font-weight: bold;
+    }
+    th.departure_table_direction {
+      vertical-align: middle;
+      padding: 0.9em 1.5em;
+      font-size: 1.25em;
+      font-weight: bold;
+      line-height: 1.25em;
+    }
+    th.departure_table_time {
+      font-weight: bold;
+      vertical-align: middle;
+      font-size: 1.5em;
+    }
+  }
+}
+
+//* Easy-button -> location icon
+button.easy-button-button {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  align-content: center;
+  padding: 0;
+  span {
+    img {
+      width: 24px;
+      height: 24px;
+    }
+  }
+}
+
+//* Customizing Menu Icons
+img.menu-icon {
+  width: 20px;
+  height: auto;
+  margin-right: 0.25rem;
+}
+
+//* Required Bootstrap imports
+@import "../node_modules/bootstrap/scss/variables";
+@import "../node_modules/bootstrap/scss/maps";
+@import "../node_modules/bootstrap/scss/mixins";
+@import "../node_modules/bootstrap/scss/root";
