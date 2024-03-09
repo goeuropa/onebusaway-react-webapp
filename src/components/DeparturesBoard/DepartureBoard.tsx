@@ -7,7 +7,7 @@ import scrollIntoView from "scroll-into-view-if-needed";
 import { Table } from "react-bootstrap";
 import { shallowEqual } from "react-redux";
 
-import { api_key2, fetchIntervalStop, key_siri, prefixURL } from "../../config";
+import { apiKey, fetchIntervalStop, siriApiKey, apiBaseURL } from "../../config";
 import { useAppSelector } from "../../redux/hooks";
 import { cutAgencyName, timeConverterFromNow } from "../../utils/helpers";
 import { logo } from "../../config";
@@ -211,7 +211,7 @@ const DepartureBoard = (): JSX.Element => {
       const controller = new AbortController();
 
       const stopInfoURLs = stopIds.map((stopInfoId: string) => {
-        return `${prefixURL}/api/where/stop/${stopInfoId}.json?key=${api_key2}`;
+        return `${apiBaseURL}/api/where/stop/${stopInfoId}.json?key=${apiKey}`;
       });
       // console.log({ stopInfoURLs });
 
@@ -264,7 +264,7 @@ const DepartureBoard = (): JSX.Element => {
       const getDepartureInfo = () => {
         axios
           .get(
-            `${prefixURL}/siri/stop-monitoring?key=${key_siri}&_=${now}&OperatorRef=${agencyId}&MonitoringRef=${stopIds[index]}&StopMonitoringDetailLevel=normal&MinimumStopVisitsPerLine=3&type=json`
+            `${apiBaseURL}/siri/stop-monitoring?key=${siriApiKey}&_=${now}&OperatorRef=${agencyId}&MonitoringRef=${stopIds[index]}&StopMonitoringDetailLevel=normal&MinimumStopVisitsPerLine=3&type=json`
           )
           .then(({ data }) => {
             const dataToState = data?.Siri?.ServiceDelivery?.StopMonitoringDelivery[0]?.MonitoredStopVisit;
