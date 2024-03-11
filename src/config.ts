@@ -10,7 +10,7 @@ export const appName = process.env.REACT_APP_APP_NAME ?? "OneBusAway React WebAp
 //* UI Config
 export const logo = logoOBA;
 export const fetchOnStart = true;
-export const listPositionForAgency = 0; //* y
+export const listPositionForAgency = 0; //* customize here
 export const minLinesAtStop = 4; //* customize here
 export const reducePolylinesPoints = 3; //* customize here
 export const showChangeLanguage = true; //* customize here

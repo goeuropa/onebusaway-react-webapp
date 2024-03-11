@@ -114,7 +114,9 @@ const VehicleInfo = (): JSX.Element => {
       const getBusInfo = () => {
         axios
           .get(
-            `${apiBaseURL}/siri/vehicle-monitoring?key=${siriApiKey}&OperatorRef=${agencyId}&VehicleRef=${vehicleRefShort}&MaximumNumberOfCallsOnwards=${maximumNumberOfCallsOnwards}&VehicleMonitoringDetailLevel=calls&TripId=${blockRef}&type=json`
+            `${apiBaseURL}/siri/vehicle-monitoring?key=${siriApiKey}&OperatorRef=${agencyId}&VehicleRef=${vehicleRefShort}&MaximumNumberOfCallsOnwards=${maximumNumberOfCallsOnwards}&VehicleMonitoringDetailLevel=calls&TripId=${encodeURIComponent(
+              blockRef as string
+            )}&type=json`
           )
           .then(({ data }) => {
             // console.log("data:", data);
