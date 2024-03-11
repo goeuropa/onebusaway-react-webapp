@@ -35,7 +35,7 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 
 1. You must have [node.js](https://nodejs.org/en) installed.
 2. Once you download the repository, you need install the dependencies with the command: `npm ci`.
-3. Choose the right configuration for your agency, file: **_config.ts_**
+3. Choose the right configuration for your agency: copy `env.example` to `.env` and edit the `.env` file to set an app name, API key, and API server URL. More configuration options are available in `config.ts`.
 4. Then you can run: `npm start` or do build: `npm run build`.
 5. Finally, there's deployment. Follow this [instruction](https://create-react-app.dev/docs/deployment)
 

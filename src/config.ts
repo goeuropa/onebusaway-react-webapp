@@ -1,17 +1,20 @@
-//* Agency Config
 import logoOBA from "./assets/Logo/logoOBA.png"; //* customize here
+
+//* You can configure these settings with a .env file
+// The REACT_APP prefix is necessary as explained here: https://stackoverflow.com/a/56668716/136839
+export const apiBaseURL = process.env.REACT_APP_API_BASE_URL ?? ""; //! Add api here!
+export const apiKey = process.env.REACT_APP_API_KEY ?? ""; //! Add key here!
+export const siriApiKey = process.env.REACT_APP_SIRI_API_KEY ?? ""; //! Add key here!
+export const appName = process.env.REACT_APP_APP_NAME ?? "OneBusAway React WebApp"; //* customize here
+
+//* UI Config
 export const logo = logoOBA;
 export const fetchOnStart = true;
 export const listPositionForAgency = 0; //* y
 export const minLinesAtStop = 4; //* customize here
 export const reducePolylinesPoints = 3; //* customize here
 export const showChangeLanguage = true; //* customize here
-export const prefixURL = ""; //! Add api here!
-export const appName = "OneBusAway React WebApp"; //* customize here
 export const zoomRange = 0.01; //* customize here
-export const api_key = ""; //! Add key here!
-export const key_siri = ""; //! Add key here!
-export const api_key2 = ""; //! Add key here!
 export const zoomEnableSwitch = 14; //* customize here
 export const zoomForSelectedBusStation = 14; //* customize here
 export const zoomFullIcons = 10.5; //* customize here

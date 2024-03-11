@@ -22,13 +22,13 @@ import {
   SHOW_LIVE_BUSES,
   SHOW_SCHEDULED_BUSES,
 } from "./actionTypes";
-import { api_key, api_key2, key_siri, listPositionForAgency, prefixURL } from "./../config";
+import { apiKey, siriApiKey, listPositionForAgency, apiBaseURL } from "./../config";
 import { store } from "../redux/store";
 import { cutAgencyName, dynamicTexColor, getAcronym, removeDuplicateStops } from "../utils/helpers";
 
 export const fetchAgencyID = () => async (dispatch: Dispatch) => {
   await axios
-    .get(`${prefixURL}/api/where/agencies-with-coverage.json?key=${api_key}`)
+    .get(`${apiBaseURL}/api/where/agencies-with-coverage.json?key=${apiKey}`)
     .then(({ data }) => {
       // console.log("data:", data);
       const statusCode = data.code;
@@ -89,7 +89,7 @@ export const fetchAgencyID = () => async (dispatch: Dispatch) => {
 
 export const fetchLinesList = (agencyId: string) => async (dispatch: Dispatch) => {
   await axios
-    .get(`${prefixURL}/api/where/route-ids-for-agency/${agencyId}.json?key=${api_key}`)
+    .get(`${apiBaseURL}/api/where/route-ids-for-agency/${agencyId}.json?key=${apiKey}`)
     .then(({ data }) => {
       // console.log("data:", data.data);
       let unsortedList = data?.data?.list;
@@ -130,7 +130,7 @@ export const selectRoute = (routeNumber: number | string) => async (dispatch: Di
 export const fetchPolylines_Stops = (agencyId: string, routeNumber: string) => async (dispatch: Dispatch) => {
   // console.log({ agencyId, routeNumber });
   await axios
-    .get(`${prefixURL}/api/where/stops-for-route/${agencyId}_${routeNumber}.json?includePolylines=true&key=${api_key}`)
+    .get(`${apiBaseURL}/api/where/stops-for-route/${agencyId}_${routeNumber}.json?includePolylines=true&key=${apiKey}`)
     .then(({ data }) => {
       // console.log({ routeNumber });
       dispatch({ type: GET_POLYLINES_STOPS, payload: data.data });
@@ -146,7 +146,7 @@ export const fetchPolylines_Stops = (agencyId: string, routeNumber: string) => a
 export const getActiveBuses = (agencyId: string, routeNumber: number | string) => async (dispatch: Dispatch) => {
   // console.log({ agencyId, routeNumber });
   await axios
-    .get(`${prefixURL}/siri/vehicle-monitoring?key=${key_siri}&OperatorRef=${agencyId}&LineRef=${routeNumber}&type=json`)
+    .get(`${apiBaseURL}/siri/vehicle-monitoring?key=${siriApiKey}&OperatorRef=${agencyId}&LineRef=${routeNumber}&type=json`)
     .then(({ data }) => {
       // console.log("data:", data);
       const dataToFetch = data?.Siri?.ServiceDelivery?.VehicleMonitoringDelivery["0"].VehicleActivity;
@@ -163,7 +163,7 @@ export const getStopInfo = (stopId: string, time: string) => async (dispatch: Di
   const now = Date.now();
   // console.log({ now });
   await axios
-    .get(`${prefixURL}/api/where/arrivals-and-departures-for-stop/${stopId}.json?minutesAfter=${time}&key=${api_key}`)
+    .get(`${apiBaseURL}/api/where/arrivals-and-departures-for-stop/${stopId}.json?minutesAfter=${time}&key=${apiKey}`)
     .then(({ data }) => {
       const dataToFetch = data?.data?.entry?.arrivalsAndDepartures;
       const dataToSet = dataToFetch.sort(
@@ -187,7 +187,7 @@ export const getActiveBlocks = () => async (dispatch: Dispatch) => {
 
   await axios
     .get(
-      `${prefixURL}/api/where/trips-for-location.json?lat=${lat}&lon=${lon}&latSpan=${latSpan}&lonSpan=${lonSpan}&key=${api_key}`
+      `${apiBaseURL}/api/where/trips-for-location.json?lat=${lat}&lon=${lon}&latSpan=${latSpan}&lonSpan=${lonSpan}&key=${apiKey}`
     )
     .then(({ data }) => {
       // console.log("data:", data);
@@ -234,7 +234,7 @@ export const dispatchZoom = (zoom: number) => async (dispatch: Dispatch) => {
 export const getDirections = (agencyId: string, routeNumber: number | string) => async (dispatch: Dispatch) => {
   // console.log({ routeNumber });
   await axios
-    .get(`${prefixURL}/api/where/stops-for-route/${agencyId}_${routeNumber}.json?key=${api_key2}&type=JSON`)
+    .get(`${apiBaseURL}/api/where/stops-for-route/${agencyId}_${routeNumber}.json?key=${apiKey}&type=JSON`)
     .then(({ data }) => {
       const stopsWithInfo = data?.data?.references?.stops;
       const dataToDispatch = data?.data?.entry?.stopGroupings[0]?.stopGroups;
@@ -282,7 +282,7 @@ export const getAllPolylinesStops = () => async (dispatch: Dispatch) => {
     // console.log("list:", list);
     const endpoints = list?.list?.map(
       (routeNumber: number) =>
-        `${prefixURL}/api/where/stops-for-route/${agencyId}_${routeNumber}.json?includePolylines=true&key=${api_key}`
+        `${apiBaseURL}/api/where/stops-for-route/${agencyId}_${routeNumber}.json?includePolylines=true&key=${apiKey}`
     );
     // console.log("endpoints:", endpoints);
     const promises = endpoints.map((endpoint: string) => axios.get(endpoint));
@@ -371,7 +371,7 @@ export const getAllBuses = () => async (dispatch: Dispatch) => {
     // console.log("activeBlocks:", activeBlocks);
     const endpoints = activeBlocks?.activeBlocks?.map(
       (routeNumber: number) =>
-        `${prefixURL}/siri/vehicle-monitoring?key=${key_siri}&OperatorRef=${agencyId}&LineRef=${routeNumber}&type=json`
+        `${apiBaseURL}/siri/vehicle-monitoring?key=${siriApiKey}&OperatorRef=${agencyId}&LineRef=${routeNumber}&type=json`
     );
     // console.log("endpoints:", endpoints);
     const promises = endpoints.map((endpoint: string) => axios.get(endpoint));

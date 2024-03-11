@@ -8,9 +8,9 @@ import { shallowEqual } from "react-redux";
 
 import {
   fetchInterval,
-  key_siri,
+  siriApiKey,
   maximumNumberOfCallsOnwards,
-  prefixURL,
+  apiBaseURL,
   routeListButtonWidth,
   showDevInfo,
 } from "../../config";
@@ -114,7 +114,7 @@ const VehicleInfo = (): JSX.Element => {
       const getBusInfo = () => {
         axios
           .get(
-            `${prefixURL}/siri/vehicle-monitoring?key=${key_siri}&OperatorRef=${agencyId}&VehicleRef=${vehicleRefShort}&MaximumNumberOfCallsOnwards=${maximumNumberOfCallsOnwards}&VehicleMonitoringDetailLevel=calls&TripId=${blockRef}&type=json`
+            `${apiBaseURL}/siri/vehicle-monitoring?key=${siriApiKey}&OperatorRef=${agencyId}&VehicleRef=${vehicleRefShort}&MaximumNumberOfCallsOnwards=${maximumNumberOfCallsOnwards}&VehicleMonitoringDetailLevel=calls&TripId=${blockRef}&type=json`
           )
           .then(({ data }) => {
             // console.log("data:", data);

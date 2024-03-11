@@ -11,7 +11,7 @@ import { dispatchModalInfoBottomIsOpen, selectStop } from "../../redux/actions";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import busTimetable from "../../assets/Icons/busTimetable.svg";
 import { cutAgencyName, dateToString, setNewDate, timeConverter, truncateString } from "../../utils/helpers";
-import { api_key, prefixURL, routeListButtonWidth } from "../../config";
+import { apiKey, apiBaseURL, routeListButtonWidth } from "../../config";
 import TimeTablePart from "./TimeTablePart";
 
 const DatePickerContainer = styled.div`
@@ -156,7 +156,7 @@ const TimeTableChangeDate = (): JSX.Element => {
     // console.log({ dateToSend });
     // console.log({ id });
     axios
-      .get(`${prefixURL}/api/where/schedule-for-stop/${stop_Id}.json?date=${dateToSend}&key=${api_key}`)
+      .get(`${apiBaseURL}/api/where/schedule-for-stop/${stop_Id}.json?date=${dateToSend}&key=${apiKey}`)
       .then(({ data }) => {
         const busStopDataFromApi = data?.data?.entry?.stopRouteSchedules;
         // console.log("busStopDataFromApi:", busStopDataFromApi);
