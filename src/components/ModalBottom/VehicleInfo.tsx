@@ -7,12 +7,12 @@ import { useTranslation } from "react-i18next";
 import { shallowEqual } from "react-redux";
 
 import {
-  fetchInterval,
-  siriApiKey,
-  maximumNumberOfCallsOnwards,
   apiBaseURL,
+  fetchInterval,
+  maximumNumberOfCallsOnwards,
   routeListButtonWidth,
   showDevInfo,
+  siriApiKey,
 } from "../../config";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { capitalizeFirstLetter, cutAgencyName, infoNotify, timeFromNow, truncateString } from "../../utils/helpers";
@@ -105,7 +105,7 @@ const VehicleInfo = (): JSX.Element => {
   }, [agencyId, allBuses, allRoutesTableFromRedux, allStopsTableFromRedux, navigate, t, vehicleId]);
 
   React.useEffect(() => {
-    if (agencyId && selectedBus && Object.keys(selectedBus).length > 0) {
+    if (siriApiKey && agencyId && selectedBus && Object.keys(selectedBus).length > 0) {
       const blockRef = selectedBus?.BlockRef;
       const vehicleRef = selectedBus?.VehicleRef;
       const controller = new AbortController();

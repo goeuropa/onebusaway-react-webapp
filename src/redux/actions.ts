@@ -145,6 +145,10 @@ export const fetchPolylines_Stops = (agencyId: string, routeNumber: string) => a
 
 export const getActiveBuses = (agencyId: string, routeNumber: number | string) => async (dispatch: Dispatch) => {
   // console.log({ agencyId, routeNumber });
+  if (!siriApiKey) {
+    return;
+  }
+
   await axios
     .get(`${apiBaseURL}/siri/vehicle-monitoring?key=${siriApiKey}&OperatorRef=${agencyId}&LineRef=${routeNumber}&type=json`)
     .then(({ data }) => {
@@ -363,6 +367,10 @@ export const getAllPolylinesStops = () => async (dispatch: Dispatch) => {
 };
 
 export const getAllBuses = () => async (dispatch: Dispatch) => {
+  if (!siriApiKey) {
+    return;
+  }
+
   const activeBlocks = store.getState()?.activeBlocks;
   const agencyId = store.getState()?.agency?.agencyId;
   // console.log("activeBlocks:", activeBlocks);
