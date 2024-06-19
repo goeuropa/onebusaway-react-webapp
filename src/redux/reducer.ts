@@ -148,8 +148,6 @@ const appSettings = function (
   state = {
     ...initialState,
     isModalSettingsOpen: false,
-    //Todo Is it unnecessary?
-    // isModalInfoBottomOpen: false
     showLiveBuses: true,
     showScheduledBuses: true,
     grayscaleMap: false,
