@@ -97,7 +97,6 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
   const navigate = useNavigate();
   const location = useLocation();
   const pathName = location?.pathname;
-  // console.log({ showTooltips });
 
   const dispatch: Dispatch = useAppDispatch();
 
@@ -159,7 +158,6 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
     ],
     shallowEqual
   );
-  // console.info({ allRoutesTableFromRedux });
 
   const [polylinesToDraw, setPolylinesToDraw] = React.useState<Line[]>([]);
   const [busesToShow, setBusesToShow] = React.useState<Array<BusInfo>>([]);
@@ -194,20 +192,15 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
   const [allActiveBusesMonitored, setAllActiveBusesMonitored] = React.useState<BusInfo[]>([]);
   const [allActiveBusesNotMonitored, setAllActiveBusesNotMonitored] = React.useState<BusInfo[]>([]);
   const [allRoutesTable, setAllRoutesTable] = React.useState<RouteInfo[] | null>(null);
-  // console.info("allPolylines:", allPolylines);
 
   const markerRefs = React.useRef<Array<any>>([]);
 
   const bounds = L.latLngBounds([range1, range2]);
-  // console.log({ bounds });
 
   //* New Site - tooltips
   React.useEffect(() => {
     setTimeout(() => {
-      // console.log("markerRefs:", markerRefs);
       if (markerRefs && markerRefs.current.length >= 1) {
-        // console.log("markerRefs.current:", markerRefs.current);
-        // markerRefs.current[0].current.openTooltip();
         if (zoom >= zoomFullIcons) {
           for (let i = 0; i < markerRefs.current.length; i++) {
             markerRefs.current[i].current && markerRefs.current[i].current.openTooltip();
@@ -235,10 +228,8 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
       setAppPath(["route"]);
     }
     if (pathName.includes("vehicle")) {
-      // console.log({ pathName });
       const currentPath = pathName.replace("/app/", "");
       const currentPathArray = currentPath.split("/");
-      // console.log({ currentPathArray });
       setAppPath([currentPathArray[currentPathArray.length - 2], currentPathArray[currentPathArray.length - 1]]);
     }
   }, [pathName]);
@@ -280,17 +271,14 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
 
   React.useEffect(() => {
     if (polylines) {
-      // console.log({ polylinesStrings });
       let polylinesDecoded: Line[] = [];
       const polylinesStrings: string[] = [];
       polylines.forEach((polyline: { points: string }) => {
         polylinesStrings.push(polyline.points);
         polylinesDecoded = polylinesStrings.map((polyline: string) => decodeString(polyline));
-        // console.log("polylinesDecoded:", polylinesDecoded, polylinesDecoded.length);
         polylinesDecoded.sort(function (line_A: Line, line_B: Line) {
           return line_A.length - line_B.length;
         });
-        // console.log("polylinesDecoded:", polylinesDecoded, polylinesDecoded.length);
         setPolylinesToDraw(polylinesDecoded);
       });
     }
@@ -299,7 +287,6 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
   React.useEffect(() => {
     if (polylinesToDraw.length) {
       const multiLine = turf.multiLineString(polylinesToDraw);
-      // console.log({multiLine});
 
       // Map range
       const bbox = turf.bbox(multiLine);
@@ -313,7 +300,6 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
   React.useEffect(() => {
     if (mapView) {
       const zoom = mapView?.getZoom();
-      // console.info({ zoom });
       dispatch(dispatchZoom(zoom as number));
     }
   }, [dispatch, mapView]);
@@ -323,14 +309,12 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
     if (!mapView) return;
     mapView.on("zoomend", function () {
       const zoom = mapView?.getZoom();
-      //  console.info({ zoom });
       dispatch(dispatchZoom(zoom as number));
     });
   }, [dispatch, mapView]);
 
   React.useEffect(() => {
     if (buses) {
-      // console.log({ buses }, buses.length);
       setBusesToShow(buses);
     }
   }, [buses]);
@@ -365,10 +349,6 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
         allData[i].polylinesDecoded = polylinesDecoded;
       }
 
-      //* Deselect selected route (currently all routes switched off)
-      // const stopsRoutesToSet = allData.filter((item) => cutAgencyName(item.routeId, agencyId) !== routeNumber);
-      // console.log("stopsRoutesToSet:", stopsRoutesToSet);
-
       //* Reduce number of polyline points: reducePolylinesPoints factor for route parts length >= 4!
       for (let i = 0; i < allData?.length; i++) {
         const polylinesDecodedReduced = [] as Line[];
@@ -398,23 +378,17 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
           allData[i].polylinesDecodedReduced![j] = [...new Set(allData[i].polylinesDecodedReduced![j])];
         }
       }
-      // console.log("allData:", allData);
 
       //* AllStopsArray
       const selectedRouteStopsIds = displayStops.map((stop) => stop.id);
-      // console.log("selectedRouteStopsIds:", selectedRouteStopsIds, selectedRouteStopsIds.length);
       let stopsArray = [];
       for (let i = 0; i < allData.length; i++) {
         stopsArray.push(allData[i].stops);
       }
       stopsArray = stopsArray.flat(1) as StopInfo[];
-      // console.log("stopsArray:", stopsArray);
       const stopsArrayFiltered = removeDuplicateStops(stopsArray, "id");
-      // console.log("stopsArrayFiltered:", stopsArrayFiltered);
       const stopsArrayReduced = stopsArrayFiltered.filter((item) => item?.routeIds?.length >= minLinesAtStop);
-      // console.log("stopsArrayReduced:", stopsArrayReduced);
       const stopsArrayReducedFiltered = stopsArrayReduced.filter((item) => !selectedRouteStopsIds.includes(item.id));
-      // console.log("stopsArrayReducedFiltered:", stopsArrayReducedFiltered);
 
       setAllPolylines(allData);
       setAllStops(stopsArrayReducedFiltered);
@@ -426,12 +400,9 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
       const busesToSet = allBusesFromRedux.filter(
         (bus: BusInfo) => cutAgencyName(bus.MonitoredVehicleJourney.LineRef, agencyId) !== routeNumber
       );
-      // console.info("busesToSet:", busesToSet, busesToSet.length);
       setAllActiveBuses(busesToSet);
       const busesToSetMonitored = busesToSet.filter((bus) => bus.MonitoredVehicleJourney.Monitored === true);
       const busesToSetNotMonitored = busesToSet.filter((bus) => bus.MonitoredVehicleJourney.Monitored === false);
-      // console.info("busesToSetMonitored:", busesToSetMonitored, busesToSetMonitored.length);
-      // console.info("busesToSetNotMonitored:", busesToSetNotMonitored, busesToSetNotMonitored.length);
       setAllActiveBusesMonitored(busesToSetMonitored);
       setAllActiveBusesNotMonitored(busesToSetNotMonitored);
     }
@@ -453,7 +424,6 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
       const selectedVehicle = allBusesFromRedux.filter(
         (bus) => cutAgencyName(bus?.MonitoredVehicleJourney?.VehicleRef, agencyId) === vehicleId
       );
-      // console.log("selectedVehicle:", selectedVehicle);
       const lat = selectedVehicle[0]?.MonitoredVehicleJourney?.VehicleLocation?.Latitude;
       const lon = selectedVehicle[0]?.MonitoredVehicleJourney?.VehicleLocation?.Longitude;
       mapZoomToBus(lat!, lon!, zoomForSelectedBusStation);
@@ -508,10 +478,7 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
   const onBusClick = async (busId: string, _lat: number, _lon: number, _lineRef: string) => {
     await dispatch(dispatchModalInfoBottomIsOpen(true));
     const busIdShort = await cutAgencyName(busId, agencyId);
-    // console.info({ busIdShort });
     await navigate(`/app/vehicle/${busIdShort}`);
-    //* This is not necessary, mapZoomToBus in React.useEffect above
-    // await mapZoomToBus(_lat, _lon, zoomForSelectedBusStation);
   };
 
   // Buses Icons - selected + all together
@@ -638,7 +605,6 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
   };
 
   const onStopClick = async (stopId: string) => {
-    // await console.log({ stopId });
     await dispatch(dispatchModalInfoBottomIsOpen(true));
     await navigate(`/app/stop/${stopId}`);
   };
@@ -651,7 +617,7 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
     bubblingMouseEvents: false,
   };
 
-  // Stops Icons - selected + all together
+  // Stops Icons - all stops but not selected!
   const StopsComponent = (stopsSet: StopInfo[], circleColor: string): JSX.Element => {
     return (
       <React.Fragment>
@@ -668,79 +634,45 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
         >
           {stopsSet &&
             stopsSet.length >= 1 &&
-            stopsSet.map((elem: StopInfo, index: number) => (
-              <CircleMarker
-                key={elem.id + index}
-                center={{
-                  lat: elem.lat,
-                  lng: elem.lon,
-                }}
-                pathOptions={
-                  !showTooltips
-                    ? { fillColor: circleColor, color: circleColor, fillOpacity: 1 }
-                    : { fillColor: "Violet", color: "Violet", fillOpacity: 1 }
-                }
-                radius={isMobile ? 4 : 6}
-                eventHandlers={{ click: () => onStopClick(elem.id) }}
-              >
-                <React.Fragment>
-                  {isMobile ? null : (
+            stopsSet.map((elem: StopInfo, index: number) => {
+              return (
+                <React.Fragment key={elem.id + index}>
+                  {elem?.id === selectedStop?.id ? null : (
                     <CircleMarker
+                      key={elem.id + index}
                       center={{
                         lat: elem.lat,
                         lng: elem.lon,
                       }}
-                      pathOptions={{ fillColor: "whitesmoke", color: "whitesmoke", fillOpacity: 1 }}
-                      radius={4}
+                      pathOptions={
+                        !showTooltips
+                          ? { fillColor: circleColor, color: circleColor, fillOpacity: 1 }
+                          : { fillColor: "Violet", color: "Violet", fillOpacity: 1 }
+                      }
+                      radius={isMobile ? 4 : 6}
                       eventHandlers={{ click: () => onStopClick(elem.id) }}
-                    />
+                    >
+                      <React.Fragment>
+                        {/* //* Development Tooltip */}
+                        {showDevInfo ? (
+                          <Tooltip permanent={false} direction={index % 2 === 0 ? "right" : "left"}>
+                            <span className="span_bold" style={{ color: "orangered" }}>
+                              {cutAgencyName(elem.id, agencyId)}
+                            </span>
+                          </Tooltip>
+                        ) : null}
+                        {/* //* Production Tooltip */}
+                        {process.env.NODE_ENV !== "development" && zoom && zoom >= zoomEnableSwitch && showTooltips ? (
+                          <Tooltip permanent={true} direction={index % 2 === 0 ? "right" : "left"}>
+                            <span className="span_bold">{elem.name}</span>
+                          </Tooltip>
+                        ) : null}
+                      </React.Fragment>
+                    </CircleMarker>
                   )}
-
-                  <Popup>
-                    <StopInfoDiv>
-                      <p>
-                        {t("Stop_Name")}:{" "}
-                        <span className="span_bold" style={{ color: "maroon" }}>
-                          {elem.name}
-                        </span>
-                      </p>
-                      <p>
-                        {t("Stop_Id")}:{" "}
-                        <span className="span_bold" style={{ color: "maroon" }}>
-                          {elem.id}
-                        </span>
-                      </p>
-                    </StopInfoDiv>
-                    <AvailableRoutes stop={elem} agencyId={agencyId} />
-                    {showDepartureBoardLink && (
-                      <Nav.Link
-                        to={`/stopIds/${elem.id}`}
-                        as={NavLink}
-                        style={{ marginLeft: "auto", marginRight: 0 }}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {t("Departure_board")}
-                      </Nav.Link>
-                    )}
-                  </Popup>
-                  {/* //* Development Tooltip */}
-                  {showDevInfo ? (
-                    <Tooltip permanent={false} direction={index % 2 === 0 ? "right" : "left"}>
-                      <span className="span_bold" style={{ color: "orangered" }}>
-                        {cutAgencyName(elem.id, agencyId)}
-                      </span>
-                    </Tooltip>
-                  ) : null}
-                  {/* //* Production Tooltip */}
-                  {process.env.NODE_ENV !== "development" && zoom && zoom >= zoomEnableSwitch && showTooltips ? (
-                    <Tooltip permanent={true} direction={index % 2 === 0 ? "right" : "left"}>
-                      <span className="span_bold">{elem.name}</span>
-                    </Tooltip>
-                  ) : null}
                 </React.Fragment>
-              </CircleMarker>
-            ))}
+              );
+            })}
         </MarkerClusterGroup>
       </React.Fragment>
     );
@@ -755,10 +687,10 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
           eventHandlers={{
             click: () => onStopClick(selectedStop.id),
           }}
-          pathOptions={{ fillColor: "#814196", color: "#814196", fillOpacity: 0.2, weight: 12, opacity: 0.6 }}
-          radius={15}
+          pathOptions={{ fillColor: "#814196", color: "#814196", fillOpacity: 0.6, weight: 4, opacity: 1 }}
+          radius={10}
         >
-          <Tooltip permanent={true} direction="bottom" offset={[0, 20]}>
+          <Tooltip permanent={true} direction="bottom" offset={[0, 12]}>
             <p style={{ textAlign: "center", marginBottom: 0, fontWeight: "bold" }}>{selectedStop.name}</p>
           </Tooltip>
           <Popup>
@@ -795,10 +727,8 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
   };
 
   const onPolylineDblClick = async (routeId: string) => {
-    // await console.log({ routeId });
     await dispatch(dispatchModalInfoBottomIsOpen(true));
     const route = await cutAgencyName(routeId, agencyId);
-    // await console.info({ route });
     navigate(`/app/route/${route}`);
   };
 
