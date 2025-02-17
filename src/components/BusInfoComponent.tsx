@@ -3,6 +3,7 @@ import { Spinner, Table } from "react-bootstrap";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { shallowEqual } from "react-redux";
+import { useTranslation } from "react-i18next";
 
 import { routeListButtonWidth } from "../config";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
@@ -10,6 +11,7 @@ import { cutAgencyName } from "../utils/helpers";
 import busBlue from "../assets/Icons/busBlue.svg";
 import busGray from "../assets/Icons/busGray.svg";
 import { dispatchModalInfoBottomIsOpen } from "../redux/actions";
+import OccupancyStatusIcon from "../utils/OccupancyStatusIcon";
 
 const VehicleInfoContainer = styled.div`
   width: 100%;
@@ -22,18 +24,27 @@ const BusInfoComponent = ({
   vehicleRef: string;
   publishedLineName: string;
 }): JSX.Element => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
-  const [allBuses, agencyId, allRoutesTableFromRedux]: [BusInfo[], string, RouteInfo[]] = useAppSelector(
+  const [allBuses, agencyId, allRoutesTableFromRedux, vehiclePositionsData, occupancyStatus]: [
+    BusInfo[],
+    string,
+    RouteInfo[],
+    VehiclePositionsData[],
+    boolean
+  ] = useAppSelector(
     (state: RootState) => [
       state?.allData?.activeBlocksBuses,
       state?.agency?.agencyId,
       state?.allData?.allRoutesTableReduced,
+      state?.buses?.vehiclePositionsData,
+      state?.appSettings?.occupancyStatus,
     ],
     shallowEqual
   );
-  const vehicleId = cutAgencyName(vehicleRef, agencyId);
+  const vehicleId: string = cutAgencyName(vehicleRef, agencyId);
 
   const [selectedBus, setSelectedBus] = React.useState<SelectedBus | null>(null);
   // console.log("selectedBus:", selectedBus);
@@ -54,12 +65,16 @@ const BusInfoComponent = ({
           LineRef: selectedBusFromMap[0]?.MonitoredVehicleJourney?.LineRef,
           Monitored: selectedBusFromMap[0]?.MonitoredVehicleJourney?.Monitored,
           currentRoute: currentRoute,
+          occupancyStatusData: vehiclePositionsData?.find(
+            (vehicle: VehiclePositionsData) => vehicle?.vehicleId === vehicleId
+          ) as VehiclePositionsData,
         };
+        // console.log("busInfoObject:", busInfoObject);
         setSelectedBus(busInfoObject);
       };
       initialAction();
     }
-  }, [agencyId, allBuses, allRoutesTableFromRedux, vehicleId]);
+  }, [agencyId, allBuses, allRoutesTableFromRedux, vehicleId, vehiclePositionsData]);
 
   const onLineClick = async (lineNumber: string) => {
     await dispatch(dispatchModalInfoBottomIsOpen(true));
@@ -102,6 +117,18 @@ const BusInfoComponent = ({
               {cutAgencyName(selectedBus?.VehicleRef!, agencyId)}
             </th>
           </tr>
+          {occupancyStatus ? (
+            <tr>
+              <th>
+                <OccupancyStatusIcon selectedBus={selectedBus as SelectedBus} showTooltip={false} />
+              </th>
+              <th style={{ textAlign: "center", verticalAlign: "middle" }} className="th_small_padding">
+                {selectedBus?.occupancyStatusData?.occupancyStatus
+                  ? `${t(selectedBus?.occupancyStatusData?.occupancyStatus as string)}`
+                  : `${t("n/a")}`}
+              </th>
+            </tr>
+          ) : null}
         </thead>
       </Table>
     );

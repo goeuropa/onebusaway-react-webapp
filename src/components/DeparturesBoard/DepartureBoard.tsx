@@ -1,28 +1,31 @@
 import React from "react";
 import axios from "axios";
-import { useParams } from "react-router-dom";
+import { Params, useParams } from "react-router-dom";
 import styled from "styled-components";
 import { useTranslation } from "react-i18next";
 import scrollIntoView from "scroll-into-view-if-needed";
 import { Table } from "react-bootstrap";
 import { shallowEqual } from "react-redux";
 
-import { apiKey, fetchIntervalStop, siriApiKey, apiBaseURL } from "../../config";
+import { apiKey, fetchIntervalStop, siriApiKey, apiBaseURL, axiosConfig } from "../../config";
 import { useAppSelector } from "../../redux/hooks";
 import { cutAgencyName, timeConverterFromNow } from "../../utils/helpers";
 import { logo } from "../../config";
 import CurrentTimeDiv from "./CurrentTimeDiv";
 import NotFound from "../Layout/NotFound";
 import Spinner from "../Layout/Spinner";
+import variableColors from "../../_App.module.scss";
+
+const { colorWhite, colorBlack, colorDepartureBackground, appBackgroundColor, colorLightgrey } = variableColors;
 
 const Header = styled.div`
   position: relative;
   top: 0;
   width: 100%;
   height: 90px;
-  background: black;
+  background: ${colorBlack};
   line-height: 90px;
-  color: white;
+  color: ${colorWhite};
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -43,9 +46,9 @@ const Footer = styled.div`
   right: 0;
   height: 90px;
   width: 100%;
-  background: black;
+  background: ${colorBlack};
   font-size: 1em;
-  color: white;
+  color: ${colorWhite};
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -62,7 +65,7 @@ const Footer = styled.div`
 const BodyDiv = styled.div`
   width: 100%;
   height: calc(100vh - 180px);
-  background: rgb(50, 50, 50);
+  background: ${colorDepartureBackground};
   overflow-y: scroll;
   pointer-events: none;
   -webkit-user-select: none; /* Safari */
@@ -70,7 +73,7 @@ const BodyDiv = styled.div`
 `;
 
 const Img = styled.img`
-  background-color: white;
+  background-color: ${colorWhite};
   width: "auto";
   height: 90px;
 `;
@@ -91,14 +94,14 @@ const Div = styled.div`
 `;
 
 const TableDiv = styled.div`
-  background-color: whitesmoke;
+  background-color: ${appBackgroundColor};
   margin: 0;
   width: 100%;
   height: auto;
 `;
 
 const NoDeparturesInfo = styled.div`
-  background-color: whitesmoke;
+  background-color: ${appBackgroundColor};
   margin: 0 30px;
   width: calc(100% - 60px);
   padding: 0.9em 0;
@@ -111,14 +114,14 @@ const NoDeparturesInfo = styled.div`
 `;
 
 const HR = styled.hr`
-  border-top: 1px solid rgb(50, 50, 50);
+  border-top: 1px solid ${colorDepartureBackground};
   margin: 0;
   visibility: hidden;
 `;
 
 const DepartureBoard = (): JSX.Element => {
   // const location = useLocation();
-  const params = useParams();
+  const params: Readonly<Params<string>> = useParams();
   const { t } = useTranslation();
 
   const [agencyId, allRoutesTableFromRedux]: [string, RouteInfo[]] = useAppSelector(
@@ -136,41 +139,35 @@ const DepartureBoard = (): JSX.Element => {
   const [showSpinner, setShowSpinner] = React.useState<boolean>(false);
   // console.log("departureData:", departureData, departureData.length);
 
-  const scrollBotom = () => {
-    const hrBottom = document.getElementById("hrBottom");
+  const scrollBotom = (): void => {
+    const hrBottom = document.getElementById("hrBottom") as HTMLHRElement;
     // console.log({ hrBottom });
     hrBottom &&
-      scrollIntoView(
-        hrBottom as HTMLElement,
-        {
-          duration: fetchIntervalStop / 10,
-          easing: "easeInOut",
-        } as any
-      );
+      scrollIntoView(hrBottom as HTMLElement, {
+        duration: fetchIntervalStop / 10,
+        easing: "easeInOut",
+      });
   };
 
-  const scrollTop = () => {
-    const hrTop = document.getElementById("hrTop");
+  const scrollTop = (): void => {
+    const hrTop = document.getElementById("hrTop") as HTMLHRElement;
     // console.log({ hrTop });
     hrTop &&
-      scrollIntoView(
-        hrTop as HTMLElement,
-        {
-          duration: fetchIntervalStop / 10,
-          easing: "easeInOut",
-        } as any
-      );
+      scrollIntoView(hrTop as HTMLElement, {
+        duration: fetchIntervalStop / 10,
+        easing: "easeInOut",
+      });
   };
 
   // setShowSpinner -> Bus stop change - Spinner
-  React.useEffect(() => {
+  React.useEffect((): void => {
     setTimeout(() => {
       setShowSpinner(false);
     }, 500);
   }, [showSpinner]);
 
   // setLoading -> Loader - Spinner
-  React.useEffect(() => {
+  React.useEffect((): void => {
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
@@ -215,9 +212,9 @@ const DepartureBoard = (): JSX.Element => {
       });
       // console.log({ stopInfoURLs });
 
-      const getStopInfo = () => {
+      const getStopInfo = (): void => {
         axios
-          .all(stopInfoURLs.map((stopInfoURL) => axios.get(stopInfoURL)))
+          .all(stopInfoURLs.map((stopInfoURL: string) => axios.get(stopInfoURL, axiosConfig)))
           .then(async (data) => {
             const dataToState = await data.map((array) => array?.data?.data?.entry);
             const dataToStateColors = await data.map((array) => array?.data?.data?.references?.routes);
@@ -261,10 +258,11 @@ const DepartureBoard = (): JSX.Element => {
     // console.log("tableColors:", tableColors);
 
     if (stopsInfo.length >= 1) {
-      const getDepartureInfo = () => {
+      const getDepartureInfo = (): void => {
         axios
           .get(
-            `${apiBaseURL}/siri/stop-monitoring?key=${siriApiKey}&_=${now}&OperatorRef=${agencyId}&MonitoringRef=${stopIds[index]}&StopMonitoringDetailLevel=normal&MinimumStopVisitsPerLine=3&type=json`
+            `${apiBaseURL}/siri/stop-monitoring?key=${siriApiKey}&_=${now}&OperatorRef=${agencyId}&MonitoringRef=${stopIds[index]}&StopMonitoringDetailLevel=normal&MinimumStopVisitsPerLine=3&type=json`,
+            axiosConfig
           )
           .then(({ data }) => {
             const dataToState = data?.Siri?.ServiceDelivery?.StopMonitoringDelivery[0]?.MonitoredStopVisit;
@@ -295,7 +293,7 @@ const DepartureBoard = (): JSX.Element => {
     return (
       <Table striped bordered size="lg" style={{ marginBottom: 0 }}>
         <thead className="departure_table">
-          <tr style={{ backgroundColor: "lightgray" }}>
+          <tr style={{ backgroundColor: colorLightgrey }}>
             <th colSpan={2}></th>
             <th style={{ textAlignLast: "center" }}>{t("Route")}</th>
             <th>{t("Connection")}</th>
@@ -328,7 +326,7 @@ const DepartureBoard = (): JSX.Element => {
   return (
     <React.Fragment>
       {showSpinner || loading ? (
-        <Spinner />
+        <Spinner backgroundColor={colorDepartureBackground} variant={"primary"} />
       ) : (
         <React.Fragment>
           {stopsInfo && stopsInfo.length && stopsInfo[index] ? (

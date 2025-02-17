@@ -2,6 +2,13 @@ import moment from "moment";
 import "moment/locale/pl";
 import { toast } from "react-toastify";
 
+//* Test function log into console
+export const logCons = <T extends string | any[] | object>(obj: { [key in keyof T]: T[key] }): void => {
+  const name: string = Object.keys(obj)[0];
+  const value: T = Object.values(obj)[0];
+  console.log(`${name}:`, value);
+};
+
 export const timeConverter = (date: string | number, language: string | undefined) => {
   // console.log({ date });
   const dateFormat = new Date(date);
@@ -16,9 +23,17 @@ export const timeConverter = (date: string | number, language: string | undefine
     // day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
+    // hour12: false, //* Not used!
   });
   // console.log({ dateStringFormate });
   return dateStringFormate;
+};
+
+export const convertTimestampToLocalTime = (timestamp: number): string => {
+  const date = new Date(timestamp);
+  const hours = String(date.getHours()).padStart(2, "0"); // Get hours and pad with zero if needed
+  const minutes = String(date.getMinutes()).padStart(2, "0"); // Get minutes and pad with zero if needed
+  return `${hours}:${minutes}`; // Format as hh:mm
 };
 
 export const currentTime = (date: Date, language: string | undefined) => {
@@ -91,11 +106,9 @@ export const truncateStringWithoutPopover = (str: string) => {
   }
 };
 
-export const cutAgencyName = (stringToCut: string, agencyId: string) => {
+export const cutAgencyName = (stringToCut: string, agencyId: string): string => {
   // console.log({ stringToCut, agencyId });
-  let stringShortWithoutAgencyId = stringToCut.replace(agencyId, "");
-  stringShortWithoutAgencyId = stringShortWithoutAgencyId.replace("_", "");
-  // console.log({ stringShortWithoutAgencyId });
+  const stringShortWithoutAgencyId = stringToCut?.replace(agencyId, "")?.replace("_", "") || "";
   return stringShortWithoutAgencyId;
 };
 
@@ -225,4 +238,52 @@ export const infoNotify = (infoType: string, message: string) => {
   } else {
     toast(message);
   }
+};
+
+//* Convert occupancyStatus from numeric to string value
+export const getOccupancyStatusString = (value: number): string => {
+  const occupancyStatusMap = {
+    0: "EMPTY",
+    1: "MANY_SEATS_AVAILABLE",
+    2: "FEW_SEATS_AVAILABLE",
+    3: "STANDING_ROOM_ONLY",
+    4: "CRUSHED_STANDING_ROOM_ONLY",
+    5: "FULL",
+    6: "NOT_ACCEPTING_PASSENGERS",
+    7: "NO_DATA_AVAILABLE",
+    8: "NOT_BOARDABLE",
+  } as { [key: number]: string };
+
+  return occupancyStatusMap[value as keyof typeof occupancyStatusMap] || "UNKNOWN";
+};
+
+//* Get number of icons
+export const getIconsNumber = (occupancyStatus: string): number => {
+  // console.log("occupancyStatus:", occupancyStatus);
+  const occupancyStatusMap = {
+    EMPTY: 1,
+    MANY_SEATS_AVAILABLE: 1,
+    FEW_SEATS_AVAILABLE: 2,
+    STANDING_ROOM_ONLY: 2,
+    CRUSHED_STANDING_ROOM_ONLY: 3,
+    FULL: 3,
+  };
+
+  const occupancyStatusValue: number = occupancyStatusMap[occupancyStatus as keyof typeof occupancyStatusMap] ?? 0;
+  // console.log("occupancyStatusValue:", occupancyStatusValue);
+  return occupancyStatusValue;
+};
+
+//* Get Current OccupationBusData
+export const currentOccupationBusData = (
+  busId: string,
+  vehiclePositionsData: VehiclePositionsData[],
+  agencyId: string
+): SelectedBus => {
+  const occupancyStatusData = vehiclePositionsData?.find(
+    (vehicle: VehiclePositionsData) => vehicle?.vehicleId === cutAgencyName(busId, agencyId)
+  ) as VehiclePositionsData;
+  // console.log("occupancyStatusData:", occupancyStatusData);
+  //^ Only occupancyStatusData without rest of SelectedBus data as SelectedBus
+  return { occupancyStatusData } as SelectedBus;
 };

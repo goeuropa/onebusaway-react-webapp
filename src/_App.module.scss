@@ -4,6 +4,9 @@
 //* Variables (Bootstrap 5 + custom)
 $custom-secondary-color: maroon;
 $app-background-color: whitesmoke;
+$color-lightgrey: lightgrey;
+$color-lightblue: lightblue;
+$color-lightcyan: lightcyan;
 $primary-color: #0d6efd;
 $success-color: #198754;
 $danger-color: #dc3545;
@@ -11,14 +14,36 @@ $warning-color: #f6be00;
 $secondary-color: #6c757d;
 $dark-color: #212529;
 $shadow-color: #21252980;
+$indigo-color: #6610f2;
+$purple-color: #6f42c1;
+$pink-color: #d63384;
+$teal-color: #20c997;
+$orange-color: #fd7e14;
+$color-black: #000000;
+$color-white: #ffffff;
+$color-board-background: rgb(50, 50, 50);
+$color-dim-gray: dimgray;
 
 //* Other values
 $constantHeaderHeight: 75px;
 $constantFooterHeight: 57px;
 
 :export {
+  colorLightgrey: $color-lightgrey;
+  colorLightblue: $color-lightblue;
   customSecondaryColor: $custom-secondary-color;
   primaryColor: $primary-color;
   secondaryColor: $secondary-color;
   darkColor: $dark-color;
+  dangerColor: $danger-color;
+  indigoColor: $indigo-color;
+  purpleColor: $purple-color;
+  pinkColor: $pink-color;
+  tealColor: $teal-color;
+  orangeColor: $orange-color;
+  colorBlack: $color-black;
+  colorWhite: $color-white;
+  colorDepartureBackground: $color-board-background;
+  appBackgroundColor: $app-background-color;
+  colorDimGray: $color-dim-gray;
 }

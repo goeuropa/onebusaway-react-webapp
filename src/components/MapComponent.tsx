@@ -41,12 +41,23 @@ import {
 } from "../config";
 import directionIconBlue from "../assets/Icons/directionBlue.svg";
 import directionIconDim from "../assets/Icons/directionDim.svg";
-import { cutAgencyName, dynamicTexColor, infoNotify, removeDuplicateStops } from "../utils/helpers";
+import {
+  currentOccupationBusData,
+  cutAgencyName,
+  dynamicTexColor,
+  infoNotify,
+  removeDuplicateStops,
+} from "../utils/helpers";
 import directionIconGreen from "../assets/Icons/directionGreen.svg";
 import MapHooks from "./MapHooks";
 import AvailableRoutes from "./AvailableRoutes";
 import UseShowLocation from "./Services/UseShowLocation";
 import useNetworkStatus from "./Services/useNetworkStatus";
+import variableColors from "../_App.module.scss";
+import OccupancyStatusIcon from "../utils/OccupancyStatusIcon";
+
+const { primaryColor, secondaryColor, dangerColor, customSecondaryColor, colorLightcyan, purpleColor, indigoColor } =
+  variableColors;
 
 const MapWrapper = styled.div<{ $isModalInfoBottomOpen: boolean }>`
   height: ${(props) => (props.$isModalInfoBottomOpen ? "calc((100vh  / 2) - var(--constantHeaderHeight))" : "100%")};
@@ -61,8 +72,8 @@ const BusTooltip = styled.div`
   align-content: center;
   gap: 0.25rem;
   &.selected {
-    border: 2px solid blue;
-    background-color: lightcyan;
+    border: 2px solid ${primaryColor};
+    background-color: ${colorLightcyan};
     font-weight: bold;
     font-size: 120%;
     padding: 0.25rem;
@@ -70,7 +81,7 @@ const BusTooltip = styled.div`
 `;
 
 const rectangleOptions = {
-  color: "gray",
+  color: secondaryColor,
   stroke: false,
   fillOpacity: 0.15,
   interactive: false,
@@ -118,6 +129,9 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
     showScheduledBuses,
     grayscaleMap,
     allRoutesTableFromRedux,
+    setAllRoutesStops,
+    vehiclePositionsData,
+    occupancyStatus,
   ]: [
     boolean,
     { points: string }[],
@@ -135,7 +149,10 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
     boolean,
     boolean,
     boolean,
-    RouteInfo[]
+    RouteInfo[],
+    boolean,
+    VehiclePositionsData[],
+    boolean
   ] = useAppSelector(
     (state: RootState) => [
       state?.appSettings?.isModalInfoBottomOpen,
@@ -155,6 +172,9 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
       state?.appSettings?.showScheduledBuses,
       state?.appSettings?.grayscaleMap,
       state?.allData?.allRoutesTableReduced,
+      state?.appSettings?.setAllRoutesStops,
+      state?.buses?.vehiclePositionsData,
+      state?.appSettings?.occupancyStatus,
     ],
     shallowEqual
   );
@@ -162,7 +182,6 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
   const [polylinesToDraw, setPolylinesToDraw] = React.useState<Line[]>([]);
   const [busesToShow, setBusesToShow] = React.useState<Array<BusInfo>>([]);
   const [displayStops, setDisplayStops] = React.useState<Array<StopInfo>>([]);
-
   const [range1, setRange1] = React.useState<LanLngPoint>(
     !initialMapRange
       ? { lat: 0, lng: 0 }
@@ -179,7 +198,6 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
           lng: initialMapRange.lon + initialMapRange.lonSpan / 2,
         }
   );
-
   const [mapView, setMapView] = React.useState<Map | null>(null);
   const [loading, setLoading] = React.useState<boolean>(loadingState ? loadingState : true);
 
@@ -193,9 +211,9 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
   const [allActiveBusesNotMonitored, setAllActiveBusesNotMonitored] = React.useState<BusInfo[]>([]);
   const [allRoutesTable, setAllRoutesTable] = React.useState<RouteInfo[] | null>(null);
 
-  const markerRefs = React.useRef<Array<any>>([]);
+  const markerRefs: React.MutableRefObject<any[]> = React.useRef<Array<any>>([]);
 
-  const bounds = L.latLngBounds([range1, range2]);
+  const bounds: L.LatLngBounds = L.latLngBounds([range1, range2]);
 
   //* New Site - tooltips
   React.useEffect(() => {
@@ -307,7 +325,7 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
   // Dispatching zoom to the redux state on zoom_on/zoom_of
   React.useEffect(() => {
     if (!mapView) return;
-    mapView.on("zoomend", function () {
+    mapView.on("zoomend", function (): void {
       const zoom = mapView?.getZoom();
       dispatch(dispatchZoom(zoom as number));
     });
@@ -315,9 +333,22 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
 
   React.useEffect(() => {
     if (buses) {
-      setBusesToShow(buses);
+      const monitoredBuses: BusInfo[] = buses?.filter((bus: BusInfo) => bus?.MonitoredVehicleJourney?.Monitored === true);
+      const nonMonitoredBuses: BusInfo[] = buses?.filter(
+        (bus: BusInfo) => bus?.MonitoredVehicleJourney?.Monitored === false
+      );
+      const busesToSet: BusInfo[] =
+        showLiveBuses && showScheduledBuses
+          ? buses
+          : showLiveBuses && !showScheduledBuses
+          ? monitoredBuses
+          : !showLiveBuses && showScheduledBuses
+          ? nonMonitoredBuses
+          : [];
+
+      setBusesToShow(busesToSet);
     }
-  }, [buses]);
+  }, [buses, showLiveBuses, showScheduledBuses]);
 
   React.useEffect(() => {
     if (stops) {
@@ -348,6 +379,10 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
         //* Put polylinesDecoded into allData
         allData[i].polylinesDecoded = polylinesDecoded;
       }
+
+      //* Deselect selected route (currently all routes switched off)
+      // const stopsRoutesToSet = allData.filter((item) => cutAgencyName(item.routeId, agencyId) !== routeNumber);
+      // console.log("stopsRoutesToSet:", stopsRoutesToSet);
 
       //* Reduce number of polyline points: reducePolylinesPoints factor for route parts length >= 4!
       for (let i = 0; i < allData?.length; i++) {
@@ -380,7 +415,7 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
       }
 
       //* AllStopsArray
-      const selectedRouteStopsIds = displayStops.map((stop) => stop.id);
+      const selectedRouteStopsIds = displayStops.map((stop: StopInfo) => stop.id);
       let stopsArray = [];
       for (let i = 0; i < allData.length; i++) {
         stopsArray.push(allData[i].stops);
@@ -409,7 +444,7 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
   }, [agencyId, allBusesFromRedux, routeNumber]);
 
   const mapZoomToBus = React.useCallback(
-    (lat: number, lon: number, zoom: number) => {
+    (lat: number, lon: number, zoom: number): void => {
       setTimeout(() => {
         // mapView && mapView.flyTo([lat, lon], zoom, { animate: true, duration: 1.5 });
         mapView && mapView.setView([lat, lon], zoom, { animate: false });
@@ -422,7 +457,7 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
     if (appPath[0] === "vehicle" && allBusesFromRedux && allBusesFromRedux.length >= 1) {
       const vehicleId = appPath[1];
       const selectedVehicle = allBusesFromRedux.filter(
-        (bus) => cutAgencyName(bus?.MonitoredVehicleJourney?.VehicleRef, agencyId) === vehicleId
+        (bus: BusInfo) => cutAgencyName(bus?.MonitoredVehicleJourney?.VehicleRef, agencyId) === vehicleId
       );
       const lat = selectedVehicle[0]?.MonitoredVehicleJourney?.VehicleLocation?.Latitude;
       const lon = selectedVehicle[0]?.MonitoredVehicleJourney?.VehicleLocation?.Longitude;
@@ -438,44 +473,49 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
   }, [allRoutesTableFromRedux]);
 
   //* index can be here -> polylinesToDraw are sorted earlier - Polyline - selected line!
-  const mapPolylines: JSX.Element[] = polylinesToDraw.map((elem: Line, index) => (
-    <Polyline
-      key={index}
-      pathOptions={{
-        weight: index === polylinesToDraw.length - 1 ? 6 : 4,
-        color: `#${
-          allRoutesTable?.filter((route) => cutAgencyName(route?.id, agencyId) === routeNumber)[0]?.color as string
-        }`,
-      }}
-      positions={elem}
-      children={
-        <Popup>
-          {t("Route_Id")}:{" "}
-          <span
-            className="span_bold"
-            style={{
-              padding: "0.25rem",
-              textAlign: "center",
-              verticalAlign: "middle",
-              minWidth: "2rem",
-              backgroundColor: `#${
-                allRoutesTable?.filter((route) => cutAgencyName(route?.id, agencyId) === routeNumber)[0]?.color as string
-              }`,
-              color: `#${dynamicTexColor(
-                allRoutesTable?.filter((route) => cutAgencyName(route?.id, agencyId) === routeNumber)[0]?.color as string
-              )}`,
-            }}
-          >
-            {allRoutesTable?.filter((route) => cutAgencyName(route?.id, agencyId) === routeNumber)[0]?.shortName ||
-              routeNumber}
-          </span>{" "}
-          ({polylinesToDraw.length})
-        </Popup>
-      }
-    />
-  ));
+  const mapPolylines: JSX.Element[] = polylinesToDraw.map(
+    (elem: Line, index: number): JSX.Element => (
+      <Polyline
+        key={index}
+        pathOptions={{
+          weight: index === polylinesToDraw.length - 1 ? 6 : 4,
+          color: `#${
+            allRoutesTable?.filter((route: RouteInfo) => cutAgencyName(route?.id, agencyId) === routeNumber)[0]
+              ?.color as string
+          }`,
+        }}
+        positions={elem}
+        children={
+          <Popup>
+            {t("Route_Id")}:{" "}
+            <span
+              className="span_bold"
+              style={{
+                padding: "0.25rem",
+                textAlign: "center",
+                verticalAlign: "middle",
+                minWidth: "2rem",
+                backgroundColor: `#${
+                  allRoutesTable?.filter((route: RouteInfo) => cutAgencyName(route?.id, agencyId) === routeNumber)[0]
+                    ?.color as string
+                }`,
+                color: `#${dynamicTexColor(
+                  allRoutesTable?.filter((route: RouteInfo) => cutAgencyName(route?.id, agencyId) === routeNumber)[0]
+                    ?.color as string
+                )}`,
+              }}
+            >
+              {allRoutesTable?.filter((route: RouteInfo) => cutAgencyName(route?.id, agencyId) === routeNumber)[0]
+                ?.shortName || routeNumber}
+            </span>{" "}
+            ({polylinesToDraw?.length})
+          </Popup>
+        }
+      />
+    )
+  );
 
-  const onBusClick = async (busId: string, _lat: number, _lon: number, _lineRef: string) => {
+  const onBusClick = async (busId: string, _lat: number, _lon: number, _lineRef: string): Promise<void> => {
     await dispatch(dispatchModalInfoBottomIsOpen(true));
     const busIdShort = await cutAgencyName(busId, agencyId);
     await navigate(`/app/vehicle/${busIdShort}`);
@@ -551,7 +591,7 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
                         }`,
                         color: `#${dynamicTexColor(
                           allRoutesTable?.filter(
-                            (route) =>
+                            (route: RouteInfo) =>
                               cutAgencyName(route.id, agencyId) ===
                               cutAgencyName(elem.MonitoredVehicleJourney.LineRef, agencyId)
                           )[0]?.color as string
@@ -561,12 +601,23 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
                       {allRoutesTable?.filter((route) => route?.id === elem?.MonitoredVehicleJourney?.LineRef)[0]
                         ?.shortName || elem?.MonitoredVehicleJourney?.PublishedLineName}
                     </span>
-                    <span style={{ color: "orangered", fontSize: "small" }}>
+                    <span style={{ color: dangerColor, fontSize: "small" }}>
                       {showDevInfo ? cutAgencyName(elem?.MonitoredVehicleJourney?.VehicleRef, agencyId) : null}
                       {showDevInfo ? " | " : null}
+
                       {/* //* Deviation in minutes! */}
                       {showDevInfo ? Number(elem?.MonitoredVehicleJourney?.MonitoredCall?.Extensions?.Deviation) * -1 : null}
                     </span>
+                    {occupancyStatus ? (
+                      <OccupancyStatusIcon
+                        selectedBus={currentOccupationBusData(
+                          elem?.MonitoredVehicleJourney?.VehicleRef,
+                          vehiclePositionsData,
+                          agencyId
+                        )}
+                        showTooltip={false}
+                      />
+                    ) : null}
                   </BusTooltip>
                 </Tooltip>
               </Marker>
@@ -593,9 +644,12 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
               }}
             >
               <Tooltip direction="top">
-                <span className="span_bold" style={{ color: elem?.MonitoredVehicleJourney?.Monitored ? "blue" : "dimgray" }}>
-                  {allRoutesTable?.filter((route) => route?.id === elem?.MonitoredVehicleJourney?.LineRef)[0]?.shortName ||
-                    elem.MonitoredVehicleJourney?.PublishedLineName}
+                <span
+                  className="span_bold"
+                  style={{ color: elem?.MonitoredVehicleJourney?.Monitored ? primaryColor : secondaryColor }}
+                >
+                  {allRoutesTable?.filter((route: RouteInfo) => route?.id === elem?.MonitoredVehicleJourney?.LineRef)[0]
+                    ?.shortName || elem.MonitoredVehicleJourney?.PublishedLineName}
                 </span>
               </Tooltip>
             </Marker>
@@ -604,7 +658,7 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
     );
   };
 
-  const onStopClick = async (stopId: string) => {
+  const onStopClick = async (stopId: string): Promise<void> => {
     await dispatch(dispatchModalInfoBottomIsOpen(true));
     await navigate(`/app/stop/${stopId}`);
   };
@@ -636,7 +690,7 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
             stopsSet.length >= 1 &&
             stopsSet.map((elem: StopInfo, index: number) => {
               return (
-                <React.Fragment key={elem.id + index}>
+                <React.Fragment key={`${elem.id}_${index}`}>
                   {elem?.id === selectedStop?.id ? null : (
                     <CircleMarker
                       key={elem.id + index}
@@ -656,7 +710,7 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
                         {/* //* Development Tooltip */}
                         {showDevInfo ? (
                           <Tooltip permanent={false} direction={index % 2 === 0 ? "right" : "left"}>
-                            <span className="span_bold" style={{ color: "orangered" }}>
+                            <span className="span_bold" style={{ color: dangerColor }}>
                               {cutAgencyName(elem.id, agencyId)}
                             </span>
                           </Tooltip>
@@ -687,7 +741,7 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
           eventHandlers={{
             click: () => onStopClick(selectedStop.id),
           }}
-          pathOptions={{ fillColor: "#814196", color: "#814196", fillOpacity: 0.6, weight: 4, opacity: 1 }}
+          pathOptions={{ fillColor: purpleColor, color: purpleColor, fillOpacity: 0.6, weight: 4, opacity: 1 }}
           radius={10}
         >
           <Tooltip permanent={true} direction="bottom" offset={[0, 12]}>
@@ -697,36 +751,36 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
             <StopInfoDiv>
               <p>
                 {t("Stop_Name")}:{" "}
-                <span className="span_bold" style={{ color: "maroon" }}>
+                <span className="span_bold" style={{ color: customSecondaryColor }}>
                   {selectedStop.name}
                 </span>
               </p>
               <p>
                 {t("Stop_Id")}:{" "}
-                <span className="span_bold" style={{ color: "maroon" }}>
+                <span className="span_bold" style={{ color: customSecondaryColor }}>
                   {selectedStop.id}
                 </span>
               </p>
             </StopInfoDiv>
             <AvailableRoutes stop={selectedStop} agencyId={agencyId} />
-            {showDepartureBoardLink && (
+            {!isMobile && showDepartureBoardLink ? (
               <Nav.Link
                 to={`/stopIds/${selectedStop.id}`}
                 as={NavLink}
                 style={{ marginLeft: "auto", marginRight: 0 }}
-                target="_blank"
+                // target="_blank" //* Switched of + !isMobile: 2024-10-28
                 rel="noopener noreferrer"
               >
                 {t("Departure_board")}
               </Nav.Link>
-            )}
+            ) : null}
           </Popup>
         </CircleMarker>
       </React.Fragment>
     );
   };
 
-  const onPolylineDblClick = async (routeId: string) => {
+  const onPolylineDblClick = async (routeId: string): Promise<void> => {
     await dispatch(dispatchModalInfoBottomIsOpen(true));
     const route = await cutAgencyName(routeId, agencyId);
     navigate(`/app/route/${route}`);
@@ -746,7 +800,7 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
               key={index}
               pathOptions={{
                 ...allPathOptions,
-                color: `#${allRoutesTable?.filter((route) => route.id === array.routeId)[0].color as string}`,
+                color: `#${allRoutesTable?.filter((route: RouteInfo) => route.id === array.routeId)[0].color as string}`,
               }}
               positions={elem}
               children={
@@ -761,14 +815,14 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
                         verticalAlign: "middle",
                         minWidth: "2rem",
                         backgroundColor: `#${
-                          allRoutesTable?.filter((route) => route.id === array.routeId)[0].color as string
+                          allRoutesTable?.filter((route: RouteInfo) => route.id === array.routeId)[0].color as string
                         }`,
                         color: `#${dynamicTexColor(
-                          allRoutesTable?.filter((route) => route.id === array.routeId)[0].color as string
+                          allRoutesTable?.filter((route: RouteInfo) => route.id === array.routeId)[0].color as string
                         )}`,
                       }}
                     >
-                      {allRoutesTable?.filter((route) => route?.id === array?.routeId)[0]?.shortName ||
+                      {allRoutesTable?.filter((route: RouteInfo) => route?.id === array?.routeId)[0]?.shortName ||
                         cutAgencyName(array.routeId, agencyId)}
                     </span>{" "}
                     ({array.polylinesDecoded!.length})
@@ -864,15 +918,16 @@ const MapComponent = ({ showTooltips }: { showTooltips: boolean }): JSX.Element 
               {zoom >= zoomBusOnlyCircle
                 ? BusesIconsComponent(busesToShow, directionIconBlue)
                 : BusesIconsOnlyCircle(busesToShow)}
-              {StopsComponent(displayStops, "#004896")}
+              {StopsComponent(displayStops, indigoColor)}
               {zoomToSelectedBusStation && SelectedStop()}
             </React.Suspense>
 
             {/* //* New Start Site - Get all polylines and stops */}
             {!pathName.includes("route") && !pathName.includes("vehicle") && (
               <React.Suspense fallback={null}>
-                {allRoutesTableFromRedux && allPolylines && <AllPolylinesMap />}
-                {zoom >= zoomFullIcons && allPolylines ? StopsComponent(allStops, "#004896") : null}
+                {/* //* All polylines and stops */}
+                {setAllRoutesStops && allRoutesTableFromRedux && allPolylines ? <AllPolylinesMap /> : null}
+                {setAllRoutesStops && zoom >= zoomFullIcons && allPolylines ? StopsComponent(allStops, indigoColor) : null}
 
                 {/* //^ Monitored Buses */}
                 {allActiveBuses && showLiveBuses ? (

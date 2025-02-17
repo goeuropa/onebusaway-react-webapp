@@ -1,10 +1,12 @@
 import axios from "axios";
 import * as turf from "@turf/turf";
+import GtfsRealtimeBindings from "gtfs-realtime-bindings";
 
 import {
   ACTIVE_STOP,
   DISPATCH_MODAL_INFO_BOTTOM,
   DISPATCH_MODAL_SETTINGS,
+  DISPATCH_OCCUPANCY_STATUS,
   DISPATCH_ZOOM,
   FETCH_DIRECTIONS,
   FETCH_ID,
@@ -14,21 +16,30 @@ import {
   GET_ALL_POLYLINES_STOPS,
   GET_LINES_LIST,
   GET_LOCALE,
+  GET_OCCUPANCY_STATUS,
   GET_POLYLINES_STOPS,
   SELECT_ROUTE,
   SELECT_STOP,
+  SET_ALL_ROUTES_STOPS,
   SET_GRAYSCALE_MAP,
   SET_LOADING,
   SHOW_LIVE_BUSES,
   SHOW_SCHEDULED_BUSES,
 } from "./actionTypes";
-import { apiKey, siriApiKey, listPositionForAgency, apiBaseURL } from "./../config";
+import { apiKey, siriApiKey, listPositionForAgency, apiBaseURL, axiosConfig, urlGTFS_RT_OccupancyData } from "./../config";
 import { store } from "../redux/store";
-import { cutAgencyName, dynamicTexColor, getAcronym, removeDuplicateStops } from "../utils/helpers";
+import {
+  cutAgencyName,
+  dynamicTexColor,
+  getOccupancyStatusString,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  logCons,
+  removeDuplicateStops,
+} from "../utils/helpers";
 
 export const fetchAgencyID = () => async (dispatch: Dispatch) => {
   await axios
-    .get(`${apiBaseURL}/api/where/agencies-with-coverage.json?key=${apiKey}`)
+    .get(`${apiBaseURL}/api/where/agencies-with-coverage.json?key=${apiKey}`, axiosConfig)
     .then(({ data }) => {
       // console.log("data:", data);
       const statusCode = data.code;
@@ -89,7 +100,7 @@ export const fetchAgencyID = () => async (dispatch: Dispatch) => {
 
 export const fetchLinesList = (agencyId: string) => async (dispatch: Dispatch) => {
   await axios
-    .get(`${apiBaseURL}/api/where/route-ids-for-agency/${agencyId}.json?key=${apiKey}`)
+    .get(`${apiBaseURL}/api/where/route-ids-for-agency/${agencyId}.json?key=${apiKey}`, axiosConfig)
     .then(({ data }) => {
       // console.log("data:", data.data);
       let unsortedList = data?.data?.list;
@@ -130,7 +141,10 @@ export const selectRoute = (routeNumber: number | string) => async (dispatch: Di
 export const fetchPolylines_Stops = (agencyId: string, routeNumber: string) => async (dispatch: Dispatch) => {
   // console.log({ agencyId, routeNumber });
   await axios
-    .get(`${apiBaseURL}/api/where/stops-for-route/${agencyId}_${routeNumber}.json?includePolylines=true&key=${apiKey}`)
+    .get(
+      `${apiBaseURL}/api/where/stops-for-route/${agencyId}_${routeNumber}.json?includePolylines=true&key=${apiKey}`,
+      axiosConfig
+    )
     .then(({ data }) => {
       // console.log({ routeNumber });
       dispatch({ type: GET_POLYLINES_STOPS, payload: data.data });
@@ -146,7 +160,10 @@ export const fetchPolylines_Stops = (agencyId: string, routeNumber: string) => a
 export const getActiveBuses = (agencyId: string, routeNumber: number | string) => async (dispatch: Dispatch) => {
   // console.log({ agencyId, routeNumber });
   await axios
-    .get(`${apiBaseURL}/siri/vehicle-monitoring?key=${siriApiKey}&OperatorRef=${agencyId}&LineRef=${routeNumber}&type=json`)
+    .get(
+      `${apiBaseURL}/siri/vehicle-monitoring?key=${siriApiKey}&OperatorRef=${agencyId}&LineRef=${routeNumber}&type=json`,
+      axiosConfig
+    )
     .then(({ data }) => {
       // console.log("data:", data);
       const dataToFetch = data?.Siri?.ServiceDelivery?.VehicleMonitoringDelivery["0"].VehicleActivity;
@@ -163,15 +180,18 @@ export const getStopInfo = (stopId: string, time: string) => async (dispatch: Di
   const now = Date.now();
   // console.log({ now });
   await axios
-    .get(`${apiBaseURL}/api/where/arrivals-and-departures-for-stop/${stopId}.json?minutesAfter=${time}&key=${apiKey}`)
-    .then(({ data }) => {
-      const dataToFetch = data?.data?.entry?.arrivalsAndDepartures;
-      const dataToSet = dataToFetch.sort(
+    .get(
+      `${apiBaseURL}/api/where/arrivals-and-departures-for-stop/${stopId}.json?minutesAfter=${time}&key=${apiKey}`,
+      axiosConfig
+    )
+    .then(async ({ data }) => {
+      const dataToFetch = await data?.data?.entry?.arrivalsAndDepartures;
+      const dataToSet = await dataToFetch?.sort(
         (a: { scheduledDepartureTime: number }, b: { scheduledDepartureTime: number }) =>
           a.scheduledDepartureTime - b.scheduledDepartureTime
       );
-      const dataToSetFiltered = dataToSet.filter(
-        (set: { scheduledDepartureTime: number }) => set.scheduledDepartureTime < now + 24 * 60 * 60 * 1000
+      const dataToSetFiltered = await dataToSet?.filter(
+        (set: { scheduledDepartureTime: number }) => set?.scheduledDepartureTime < now + 24 * 60 * 60 * 1000
       );
       // console.log("dataToSetFiltered:", dataToSetFiltered);
       dispatch({ type: ACTIVE_STOP, payload: { arrivalsDepartures: dataToSetFiltered } });
@@ -182,25 +202,29 @@ export const getStopInfo = (stopId: string, time: string) => async (dispatch: Di
 };
 
 export const getActiveBlocks = () => async (dispatch: Dispatch) => {
-  const agencyId = store.getState()?.agency?.agencyId;
+  const agencyId = await store.getState()?.agency?.agencyId;
   const { lat, latSpan, lon, lonSpan } = store.getState()?.agency?.initialMapRange;
 
   await axios
     .get(
-      `${apiBaseURL}/api/where/trips-for-location.json?lat=${lat}&lon=${lon}&latSpan=${latSpan}&lonSpan=${lonSpan}&key=${apiKey}`
+      `${apiBaseURL}/api/where/trips-for-location.json?lat=${lat}&lon=${lon}&latSpan=${latSpan}&lonSpan=${lonSpan}&key=${apiKey}`,
+      axiosConfig
     )
     .then(({ data }) => {
       // console.log("data:", data);
       const dataToFetch = data?.data?.references?.routes;
       // console.log("dataToFetch:", dataToFetch);
-      const dataToSet = dataToFetch.map((elem: { id: string }) => elem.id);
+      const dataToSet = dataToFetch.map((elem: { id: string }) => elem?.id);
       // console.log("dataToSet:", dataToSet);
       const activeBlocks = dataToSet.map((elem: string) => cutAgencyName(elem, agencyId));
       // console.log("activeBlocks:", activeBlocks);
       dispatch({ type: GET_ACTIVE_BLOCKS, payload: { activeBlocks: activeBlocks } });
     })
     .catch((error) => {
-      console.log("error:", error);
+      // console.log("error:", error);
+      if (axios.isAxiosError(error)) {
+        console.log("error?.response?.status:", error?.response?.status);
+      }
     });
 };
 
@@ -234,7 +258,7 @@ export const dispatchZoom = (zoom: number) => async (dispatch: Dispatch) => {
 export const getDirections = (agencyId: string, routeNumber: number | string) => async (dispatch: Dispatch) => {
   // console.log({ routeNumber });
   await axios
-    .get(`${apiBaseURL}/api/where/stops-for-route/${agencyId}_${routeNumber}.json?key=${apiKey}&type=JSON`)
+    .get(`${apiBaseURL}/api/where/stops-for-route/${agencyId}_${routeNumber}.json?key=${apiKey}&type=JSON`, axiosConfig)
     .then(({ data }) => {
       const stopsWithInfo = data?.data?.references?.stops;
       const dataToDispatch = data?.data?.entry?.stopGroupings[0]?.stopGroups;
@@ -272,95 +296,93 @@ export const selectStop = (stop: StopInfo, zoomTo: boolean) => async (dispatch: 
 };
 
 //* New Start Site - Get all polylines, stops and buses
-export const getAllPolylinesStops = () => async (dispatch: Dispatch) => {
-  const list = store.getState()?.list;
-  const agencyId = store.getState()?.agency?.agencyId;
-  // console.log("list:", list);
-  // console.log("agencyId:", agencyId);
-
-  if (list && list?.list && agencyId) {
+export const getAllPolylinesStops =
+  () =>
+  async (dispatch: Dispatch, getState: Fetch): Promise<void> => {
+    const list = getState()?.list;
+    const agencyId = getState()?.agency?.agencyId;
     // console.log("list:", list);
-    const endpoints = list?.list?.map(
-      (routeNumber: number) =>
-        `${apiBaseURL}/api/where/stops-for-route/${agencyId}_${routeNumber}.json?includePolylines=true&key=${apiKey}`
-    );
-    // console.log("endpoints:", endpoints);
-    const promises = endpoints.map((endpoint: string) => axios.get(endpoint));
-    // console.log("promises:", promises);
+    // console.log("agencyId:", agencyId);
 
-    await Promise.allSettled(promises)
-      .then((responses) => {
-        // console.log("responses:", responses);
-        const polylinesStops = [] as AllPolylinesStops[];
-        const allRoutesTable = [] as RouteInfo[];
-        const allStopsTable = [] as StopInfo[];
+    const polylines: AllPolylinesStops[] = await getState()?.allData?.polylinesStops;
+    // console.log("polylines:", polylines);
+    if (polylines?.length) {
+      return;
+    }
 
-        const fulfilledResponse = responses.filter((response) => response.status === "fulfilled");
-        fulfilledResponse.forEach((element) => {
-          // console.log({ element });
-          if (element?.status === "fulfilled") {
-            polylinesStops.push({
-              routeName_0:
-                element?.value?.data?.data?.entry?.stopGroupings[0]?.stopGroups?.filter(
-                  (elem: { id: string }) => elem.id === "0"
-                )[0]?.name?.name || "",
-              routeName_1:
-                element?.value?.data?.data?.entry?.stopGroupings[0]?.stopGroups?.filter(
-                  (elem: { id: string }) => elem.id === "1"
-                )[0]?.name?.name || "",
-              routeId: element?.value?.data?.data?.entry?.routeId,
-              polylines: element?.value?.data?.data?.entry?.polylines,
-              stops: element?.value?.data?.data?.references?.stops,
-              addedBusIcon: "",
-            });
-            allRoutesTable.push(element?.value?.data?.data?.references?.routes);
-            allStopsTable.push(element?.value?.data?.data?.references?.stops);
-          }
-        });
-        const allRoutesTableFlat = allRoutesTable.flat(1);
-        const allRoutesTableReduced = removeDuplicateStops(allRoutesTableFlat, "id");
+    if (list && list?.list && agencyId) {
+      // console.log("list:", list);
+      const endpoints: string[] = list?.list?.map(
+        (routeNumber: number) =>
+          `${apiBaseURL}/api/where/stops-for-route/${agencyId}_${routeNumber}.json?includePolylines=true&key=${apiKey}`,
+        axiosConfig
+      );
+      // console.log("endpoints:", endpoints);
+      const promises = endpoints.map((endpoint: string) => axios.get(endpoint, axiosConfig));
+      // console.log("promises:", promises);
 
-        //* Adding white textColor if doesn't exist
-        for (let i = 0; i < allRoutesTableReduced.length; i++) {
-          if (allRoutesTableReduced[i].textColor === "" || !allRoutesTableReduced[i].textColor) {
-            allRoutesTableReduced[i].textColor = "ffffff";
-          }
-        }
-        //* Adding black color if doesn't exist
-        for (let i = 0; i < allRoutesTableReduced.length; i++) {
-          if (allRoutesTableReduced[i].color === "" || !allRoutesTableReduced[i].color) {
-            allRoutesTableReduced[i].color = "000000";
-          }
-        }
+      await Promise.allSettled(promises)
+        .then((responses) => {
+          // console.log("responses:", responses);
+          const polylinesStops = [] as AllPolylinesStops[];
+          const allRoutesTable = [] as RouteInfo[];
+          const allStopsTable = [] as StopInfo[];
 
-        for (let i = 0; i < allRoutesTableReduced.length; i++) {
-          allRoutesTableReduced[i].textColor = dynamicTexColor(allRoutesTableReduced[i].color);
-        }
+          const fulfilledResponse = responses.filter((response) => response.status === "fulfilled");
+          fulfilledResponse.forEach((element) => {
+            // console.log({ element });
+            if (element?.status === "fulfilled") {
+              polylinesStops.push({
+                routeName_0:
+                  element?.value?.data?.data?.entry?.stopGroupings[0]?.stopGroups?.filter(
+                    (elem: { id: string }) => elem.id === "0"
+                  )[0]?.name?.name || "",
+                routeName_1:
+                  element?.value?.data?.data?.entry?.stopGroupings[0]?.stopGroups?.filter(
+                    (elem: { id: string }) => elem.id === "1"
+                  )[0]?.name?.name || "",
+                routeId: element?.value?.data?.data?.entry?.routeId,
+                polylines: element?.value?.data?.data?.entry?.polylines,
+                stops: element?.value?.data?.data?.references?.stops,
+                addedBusIcon: "",
+              });
+              allRoutesTable.push(element?.value?.data?.data?.references?.routes);
+              allStopsTable.push(element?.value?.data?.data?.references?.stops);
+            }
+          });
+          const allRoutesTableFlat = allRoutesTable.flat(1);
+          const allRoutesTableReduced = removeDuplicateStops(allRoutesTableFlat, "id");
 
-        //* Add acronyms - if needed!
-        if (agencyId === ("add_agencyId_here" as string)) {
+          //* Adding white textColor if doesn't exist
           for (let i = 0; i < allRoutesTableReduced.length; i++) {
-            if (!allRoutesTableReduced[i].shortName) {
-              allRoutesTableReduced[i].shortName = getAcronym(allRoutesTableReduced[i].longName);
+            if (allRoutesTableReduced[i].textColor === "" || !allRoutesTableReduced[i].textColor) {
+              allRoutesTableReduced[i].textColor = "ffffff";
             }
           }
-        }
+          //* Adding black color if doesn't exist)
+          for (let i = 0; i < allRoutesTableReduced.length; i++) {
+            if (allRoutesTableReduced[i].color === "" || !allRoutesTableReduced[i].color) {
+              allRoutesTableReduced[i].color = "000000";
+            }
+          }
 
-        const allStopsTableFlat = allStopsTable.flat(1) as StopInfo[];
-        const allStopsTableReduced = removeDuplicateStops(allStopsTableFlat, "id") as StopInfo[];
+          for (let i = 0; i < allRoutesTableReduced.length; i++) {
+            allRoutesTableReduced[i].textColor = dynamicTexColor(allRoutesTableReduced[i].color);
+          }
 
-        // console.log("polylinesStops:", polylinesStops, polylinesStops.length);
+          const allStopsTableFlat = allStopsTable.flat(1) as StopInfo[];
+          const allStopsTableReduced = removeDuplicateStops(allStopsTableFlat, "id") as StopInfo[];
 
-        dispatch({
-          type: GET_ALL_POLYLINES_STOPS,
-          payload: { polylinesStops, allRoutesTableReduced, allStopsTableReduced },
+          dispatch({
+            type: GET_ALL_POLYLINES_STOPS,
+            payload: { polylinesStops, allRoutesTableReduced, allStopsTableReduced },
+          });
+        })
+        .catch((error) => {
+          console.log("error:", error);
         });
-      })
-      .catch((error) => {
-        console.log("error:", error);
-      });
-  }
-};
+    }
+  };
 
 export const getAllBuses = () => async (dispatch: Dispatch) => {
   const activeBlocks = store.getState()?.activeBlocks;
@@ -369,12 +391,13 @@ export const getAllBuses = () => async (dispatch: Dispatch) => {
 
   if (activeBlocks && activeBlocks?.activeBlocks) {
     // console.log("activeBlocks:", activeBlocks);
-    const endpoints = activeBlocks?.activeBlocks?.map(
+    const endpoints: string[] = activeBlocks?.activeBlocks?.map(
       (routeNumber: number) =>
-        `${apiBaseURL}/siri/vehicle-monitoring?key=${siriApiKey}&OperatorRef=${agencyId}&LineRef=${routeNumber}&type=json`
+        `${apiBaseURL}/siri/vehicle-monitoring?key=${siriApiKey}&OperatorRef=${agencyId}&LineRef=${routeNumber}&type=json`,
+      axiosConfig
     );
     // console.log("endpoints:", endpoints);
-    const promises = endpoints.map((endpoint: string) => axios.get(endpoint));
+    const promises = endpoints.map((endpoint: string) => axios.get(endpoint, axiosConfig));
     // console.log("promises:", promises);
 
     await Promise.allSettled(promises)
@@ -438,6 +461,75 @@ export const dispatchShowScheduledBuses = (showScheduledBuses: boolean) => async
 export const setGrayscaleMap = (grayscaleMap: boolean) => async (dispatch: Dispatch) => {
   try {
     dispatch({ type: SET_GRAYSCALE_MAP, payload: { grayscaleMap } });
+  } catch (error) {
+    console.log("error:", error);
+  }
+};
+
+export const dispatchShowAllRoutesStops = (setAllRoutesStops: boolean) => async (dispatch: Dispatch) => {
+  try {
+    dispatch({ type: SET_ALL_ROUTES_STOPS, payload: { setAllRoutesStops } });
+  } catch (error) {
+    console.log("error:", error);
+  }
+};
+
+//* New features
+export const getOccupancyStatusData =
+  () =>
+  async (dispatch: Dispatch, getState: Fetch): Promise<void> => {
+    const occupancyStatus: boolean = getState()?.appSettings?.occupancyStatus;
+
+    if (!urlGTFS_RT_OccupancyData || !occupancyStatus) {
+      return;
+    }
+
+    const vehiclePositionsData = [] as VehiclePositionsData[];
+
+    try {
+      const response = await axios.get(urlGTFS_RT_OccupancyData, { headers: {}, responseType: "arraybuffer" });
+      if (response.status !== 200) {
+        const error = new Error(`${response.config.url}: ${response.status} ${response.statusText}`);
+        console.log("error:", error);
+      }
+
+      const buffer: Uint8Array = new Uint8Array(response.data);
+      const feed = GtfsRealtimeBindings.transit_realtime.FeedMessage.decode(
+        buffer
+      ) as GtfsRealtimeBindings.transit_realtime.FeedMessage;
+      // console.log("feed?.entity:", feed?.entity);
+
+      feed?.entity.forEach((dataGTFS: GtfsRealtimeBindings.transit_realtime.IFeedEntity) => {
+        const objectDataGTFS = {
+          vehicleName: dataGTFS?.id as string,
+          vehicleId: dataGTFS?.vehicle?.vehicle?.id as string,
+          routeId: dataGTFS?.vehicle?.trip?.routeId as string,
+          tripId: dataGTFS?.vehicle?.trip?.tripId as string,
+          occupancyStatus: (dataGTFS?.vehicle as GtfsRealtimeBindings.transit_realtime.IVehiclePosition)?.hasOwnProperty(
+            "occupancyStatus"
+          )
+            ? (getOccupancyStatusString(dataGTFS?.vehicle?.occupancyStatus as number) as string)
+            : null, //* Need to check hasOwnProperty!
+        };
+        vehiclePositionsData.push(objectDataGTFS);
+      });
+
+      // logCons({ vehiclePositionsData });
+      dispatch({ type: GET_OCCUPANCY_STATUS, payload: { vehiclePositionsData } });
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.log("error?.response?.status:", error?.response?.status);
+      }
+      if (error instanceof Error) {
+        console.log("error?.message:", error?.message);
+        console.log("error?.status:", error?.name);
+      }
+    }
+  };
+
+export const dispatchOccupancyStatus = (occupancyStatus: boolean) => async (dispatch: Dispatch) => {
+  try {
+    dispatch({ type: DISPATCH_OCCUPANCY_STATUS, payload: { occupancyStatus } });
   } catch (error) {
     console.log("error:", error);
   }

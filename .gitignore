@@ -31,6 +31,6 @@ yarn-error.log*
 
 # My Entries
 # .env #* Example .env
-# .vscode/
-# /build
-# /build*
+.vscode/
+build
+build*

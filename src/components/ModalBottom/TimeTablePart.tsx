@@ -8,6 +8,10 @@ import { dateToString } from "../../utils/helpers";
 import AvailableRoutes from "../AvailableRoutes";
 import { dispatchModalInfoBottomIsOpen } from "../../redux/actions";
 import { useAppDispatch } from "../../redux/hooks";
+import variableColors from "../../_App.module.scss";
+import useNetworkStatus from "../Services/useNetworkStatus";
+
+const { secondaryColor } = variableColors;
 
 const CollapseContainer = styled.div`
   width: 100%;
@@ -26,9 +30,9 @@ const SelectedStopDiv = styled.div`
     font-weight: 600;
   }
   p {
-    font-size: small;
+    font-size: 0.75rem;
     margin-bottom: 0;
-    color: dimgray;
+    color: ${secondaryColor};
   }
 `;
 
@@ -59,7 +63,7 @@ const TimeTablePart = ({
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const dispatch = useAppDispatch();
-  // console.log({ pathname });
+  const { isMobile } = useNetworkStatus();
 
   const [openCollapse, setOpenCollapse] = React.useState<boolean>(false);
 
@@ -69,6 +73,7 @@ const TimeTablePart = ({
         {selectedStop && Object.keys(selectedStop).length >= 1 && (
           <React.Fragment>
             <h4 style={{ color: "inherit" }}>{selectedStop?.name}</h4>
+            {isMobile ? null : <p>{selectedStop?.id}</p>}
           </React.Fragment>
         )}
       </SelectedStopDiv>
@@ -82,8 +87,9 @@ const TimeTablePart = ({
       <ButtonGroup aria-label="Button Group Timetable" style={{ width: "100%" }}>
         <Button
           size="sm"
-          disabled={!pathname.includes("date") ? true : false}
-          variant={!pathname.includes("date") ? "primary" : "outline-primary"}
+          disabled={pathname.includes("/app/stop/") ? true : false}
+          variant={pathname.includes("/app/stop/") ? "primary" : "outline-primary"}
+          className={""}
           onClick={async () => {
             await dispatch(dispatchModalInfoBottomIsOpen(true));
             await navigate(`/app/stop/${stop_Id}`);
@@ -91,10 +97,12 @@ const TimeTablePart = ({
         >
           {t("RightNow")}
         </Button>
+        {/* //* Old Timetable */}
         <Button
           size="sm"
           disabled={pathname.includes("date") ? true : false}
           variant={pathname.includes("date") ? "primary" : "outline-primary"}
+          className={""}
           onClick={async () => {
             await dispatch(dispatchModalInfoBottomIsOpen(true));
             await navigate(`/app/date/${dateToSend}/stop/${stop_Id}`);
@@ -102,12 +110,26 @@ const TimeTablePart = ({
         >
           {t("Timetable")}
         </Button>
+        {/* //* New TimetableBoard */}
         <Button
           size="sm"
-          onClick={() => setOpenCollapse(!openCollapse)}
+          disabled={pathname.includes("boardDate") ? true : false}
+          variant={pathname.includes("boardDate") ? "primary" : "outline-primary"}
+          className={""}
+          onClick={async () => {
+            await dispatch(dispatchModalInfoBottomIsOpen(true));
+            await navigate(`/app/boardDate/${dateToSend}/stop/${stop_Id}`);
+          }}
+        >
+          {t("TimetableBoard")}
+        </Button>
+        <Button
+          size="sm"
+          onClick={(): void => setOpenCollapse(!openCollapse)}
           aria-controls="availableLines _collapse"
           aria-expanded={openCollapse}
           variant={openCollapse ? "dark" : "outline-dark"}
+          className={""}
         >
           {t("Routes")}
         </Button>

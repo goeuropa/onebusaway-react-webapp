@@ -7,7 +7,7 @@ import "react-toastify/dist/ReactToastify.css";
 
 import "./App.scss";
 import MapComponent from "./components/MapComponent";
-import { appName, fetchInterval, fetchOnStart } from "./config";
+import { appName, fetchInterval, fetchOnStart, urlGTFS_RT_OccupancyData } from "./config";
 import {
   dispatchModalInfoBottomIsOpen,
   fetchAgencyID,
@@ -17,6 +17,7 @@ import {
   getActiveBuses,
   getAllBuses,
   getAllPolylinesStops,
+  getOccupancyStatusData,
   selectRoute,
   setLoadingAction,
 } from "./redux/actions";
@@ -47,29 +48,33 @@ function App(): JSX.Element {
 
   const { pathname: pathName } = useLocation();
   const dispatch: Dispatch = useAppDispatch();
-
-  const [isModalInfoBottomOpen, isSettingsModalOpen, routeNumber, statusCode, agencyId, list, loadingState, activeBlocks]: [
-    boolean,
-    boolean,
-    number,
-    number,
-    string,
-    { list: number[] },
-    boolean,
-    number[]
-  ] = useAppSelector(
-    (state: RootState) => [
-      state?.appSettings?.isModalInfoBottomOpen,
-      state?.appSettings?.isModalSettingsOpen,
-      state?.agency?.routeNumber,
-      state?.agency?.statusCode,
-      state?.agency?.agencyId,
-      state?.list,
-      state?.loading.setLoading,
-      state?.activeBlocks.activeBlocks,
-    ],
-    shallowEqual
-  );
+  const [
+    isModalInfoBottomOpen,
+    isSettingsModalOpen,
+    routeNumber,
+    statusCode,
+    agencyId,
+    list,
+    loadingState,
+    activeBlocks,
+    allPolylinesStopsFromRedux,
+    occupancyStatus,
+  ]: [boolean, boolean, number, number, string, { list: number[] }, boolean, number[], AllPolylinesStops[], boolean] =
+    useAppSelector(
+      (state: RootState) => [
+        state?.appSettings?.isModalInfoBottomOpen,
+        state?.appSettings?.isModalSettingsOpen,
+        state?.agency?.routeNumber,
+        state?.agency?.statusCode,
+        state?.agency?.agencyId,
+        state?.list,
+        state?.loading.setLoading,
+        state?.activeBlocks.activeBlocks,
+        state?.allData?.polylinesStops,
+        state?.appSettings?.occupancyStatus,
+      ],
+      shallowEqual
+    );
 
   //* New Mobile Layout - ModalInfoBottom
   const pathnameEndsWith_app: string =
@@ -91,7 +96,7 @@ function App(): JSX.Element {
 
   //** New Mobile Layout - Fixed Navigation
   React.useEffect(() => {
-    const paths = ["route", "vehicle", "stop", "date"];
+    const paths = ["route", "vehicle", "stop", "date", "boardDate"];
     if (paths.some((path: string) => pathName.includes(path))) {
       dispatch(dispatchModalInfoBottomIsOpen(true));
     }
@@ -171,6 +176,9 @@ function App(): JSX.Element {
   // Get active buses - initial fetch - if ONE line (SW)
   React.useEffect(() => {
     // console.log("list.list:", list.list);
+    if (pathName?.includes("stopIds")) {
+      return;
+    }
     if (statusCode && agencyId && list?.list?.length >= 1 && routeNumber) {
       // console.log("list.list:", list.list, list.list.length, { routeNumber });
       const setFetchInterval = () => {
@@ -185,10 +193,13 @@ function App(): JSX.Element {
         clearInterval(fetchingInterval);
       };
     }
-  }, [agencyId, dispatch, list, statusCode, routeNumber]);
+  }, [agencyId, dispatch, list, statusCode, routeNumber, pathName]);
 
   //* Fetching activeBlocks -> one endpoint
   React.useEffect(() => {
+    if (pathName?.includes("stopIds")) {
+      return;
+    }
     if (list && list?.list && agencyId) {
       const setFetchInterval = () => {
         // console.log("Data was fetched at", new Date().toLocaleString(), { agencyId });
@@ -203,14 +214,21 @@ function App(): JSX.Element {
         // console.log("Interval was cleared");
       };
     }
-  }, [agencyId, dispatch, list]);
+  }, [agencyId, dispatch, list, pathName]);
 
   //* New Start Site - Get all buses
   React.useEffect(() => {
+    if (pathName?.includes("stopIds")) {
+      return;
+    }
     if (list?.list?.length >= 1 && activeBlocks) {
       const setFetchInterval = () => {
         // console.log("Data was fetched at", new Date().toLocaleString());
         dispatch(getAllBuses());
+        //^ New feature: conditionally get OccupancyStatus data
+        if (urlGTFS_RT_OccupancyData && occupancyStatus) {
+          dispatch(getOccupancyStatusData());
+        }
       };
       setFetchInterval();
       //* Setting up interval for fetching data - every fetchInterval
@@ -220,22 +238,28 @@ function App(): JSX.Element {
         // console.log("Interval was cleared");
       };
     }
-  }, [activeBlocks, dispatch, list]);
+  }, [activeBlocks, dispatch, list, occupancyStatus, pathName]);
 
   // * New Start Site - Get all polylines and stops
   React.useEffect(() => {
+    // console.log("allPolylinesStopsFromRedux?.length:", allPolylinesStopsFromRedux?.length);
+    if (allPolylinesStopsFromRedux?.length) {
+      return;
+    }
+    if (pathName?.includes("stopIds")) {
+      return;
+    }
     if (activeBlocks && list?.list?.length >= 1) {
       setTimeout(() => {
         dispatch(getAllPolylinesStops());
       }, 2000);
     }
-  }, [activeBlocks, dispatch, list]);
+  }, [activeBlocks, allPolylinesStopsFromRedux?.length, dispatch, list, pathName]);
 
   //^ New Mobile Layout - ModalBottomInfo - dialog customization
   React.useEffect(() => {
     if (document.getElementById("customModal")) {
-      const customModal = document.getElementById("customModal")!.parentElement;
-      // console.info({ customModal });
+      const customModal = document.getElementById("customModal")?.parentElement as HTMLDivElement;
       if (customModal) {
         customModal.classList.add("custom-dialog");
       }
@@ -251,7 +275,11 @@ function App(): JSX.Element {
               path="/app/*"
               element={
                 <React.Fragment>
-                  {loading ? <Spinner /> : <MapComponent showTooltips={showTooltips} />}
+                  {loading ? (
+                    <Spinner backgroundColor={undefined} variant={"primary"} />
+                  ) : (
+                    <MapComponent showTooltips={showTooltips} />
+                  )}
 
                   {/* //* Modals */}
                   <ModalSettings

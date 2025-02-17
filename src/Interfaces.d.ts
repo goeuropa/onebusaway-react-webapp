@@ -26,6 +26,7 @@ interface SelectedBus {
   PublishedLineName?: string;
   VehicleLocation?: { Latitude: number; Longitude: number };
   destinationName?: { name: string }[];
+  occupancyStatusData: VehiclePositionsData;
 }
 
 interface BusInfo {
@@ -167,4 +168,20 @@ interface RouteInfo {
   longName: string;
   shortName: string | number;
   textColor: string;
+}
+
+interface RouteDeparturesData {
+  routeId: string;
+  color: string;
+  longNameAdded: string;
+  shortNameAdded: string;
+  departures: string[];
+}
+
+interface VehiclePositionsData {
+  vehicleName: string;
+  vehicleId: string;
+  routeId: string;
+  tripId: string;
+  occupancyStatus: string | null;
 }

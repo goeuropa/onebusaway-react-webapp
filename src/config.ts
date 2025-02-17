@@ -6,6 +6,7 @@ export const apiBaseURL = process.env.REACT_APP_API_BASE_URL ?? ""; //! Add api 
 export const apiKey = process.env.REACT_APP_API_KEY ?? ""; //! Add key here!
 export const siriApiKey = process.env.REACT_APP_SIRI_API_KEY ?? ""; //! Add key here!
 export const appName = process.env.REACT_APP_APP_NAME ?? "OneBusAway React WebApp"; //* customize here
+export const urlGTFS_RT_OccupancyData = (process.env.REACT_APP_GTFS_RT_OCCUPANCY_STATUS_DATA as string) ?? "";
 
 //* UI Config
 export const logo = logoOBA;
@@ -26,14 +27,25 @@ export const routeListButtonWidth = "42px"; //* customize here
 export const showDepartureBoardLink = true; //* customize here
 export const defaultLanguage = "en"; //* customize here
 export const showOnlyTheLongest = true; //* customize here
+export const showAllRoutesStopsSettings = true; //* customize here
 
 //* Common Settings
+export const timeTableCalendarDatesSettings = [7, 180]; //*- Both positive number (7 days before today)!
+export const globalTimetableHours = [5, 23];
 export const fetchInterval = process.env.NODE_ENV === "development" ? 100 * 1000 : 30 * 1000; //!fetchInterval (15s-30s)
 export const fetchIntervalStop = process.env.NODE_ENV === "development" ? 100 * 1000 : 30 * 1000; //!fetchInterval (30s)
 export const maximumNumberOfCallsOnwards = 15;
 export const i18nPrefix = "";
 export const reactRouterBaseLine = "";
 export const showDevInfo = process.env.NODE_ENV === "development" ? true : false; //! showDevInfo;
+
+//* Axios config
+export const axiosConfig = {
+  headers: {
+    "Accept-Language": "en", // Set to English
+    Accept: "application/json; charset=utf-8",
+  },
+};
 
 //@ Bootstrap_5 breakpoint: large, lg>=992
 //^ Breakpoints

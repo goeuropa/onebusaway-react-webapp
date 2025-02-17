@@ -13,6 +13,7 @@ import {
   apiBaseURL,
   routeListButtonWidth,
   showDevInfo,
+  axiosConfig,
 } from "../../config";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { capitalizeFirstLetter, cutAgencyName, infoNotify, timeFromNow, truncateString } from "../../utils/helpers";
@@ -21,6 +22,7 @@ import busGray from "../../assets/Icons/busGray.svg";
 import directionIconGreen from "../../assets/Icons/directionGreen.svg";
 import mapIcon from "../../assets/Icons/mapIcon.svg";
 import { dispatchModalInfoBottomIsOpen, selectRoute, setLoadingAction } from "../../redux/actions";
+import OccupancyStatusIcon from "../../utils/OccupancyStatusIcon";
 
 const VehicleInfoContainer = styled.div`
   width: 100%;
@@ -42,19 +44,23 @@ const VehicleInfo = (): JSX.Element => {
   const { vehicleId } = useParams();
   const dispatch: Dispatch = useAppDispatch();
 
-  const [allBuses, agencyId, allRoutesTableFromRedux, selectedLanguage, allStopsTableFromRedux]: [
-    BusInfo[],
-    string,
-    RouteInfo[],
-    string,
-    StopInfo[]
-  ] = useAppSelector(
+  const [
+    allBuses,
+    agencyId,
+    allRoutesTableFromRedux,
+    selectedLanguage,
+    allStopsTableFromRedux,
+    vehiclePositionsData,
+    occupancyStatus,
+  ]: [BusInfo[], string, RouteInfo[], string, StopInfo[], VehiclePositionsData[], boolean] = useAppSelector(
     (state: RootState) => [
       state?.allData?.activeBlocksBuses,
       state?.agency?.agencyId,
       state?.allData?.allRoutesTableReduced,
       state?.agency?.selectedLanguage,
       state?.allData?.allStopsTableReduced,
+      state?.buses?.vehiclePositionsData,
+      state?.appSettings?.occupancyStatus,
     ],
     shallowEqual
   );
@@ -94,15 +100,19 @@ const VehicleInfo = (): JSX.Element => {
           PublishedLineName: selectedBusFromMap[0]?.MonitoredVehicleJourney?.PublishedLineName ?? "",
           DestinationRef: selectedBusFromMap[0]?.MonitoredVehicleJourney?.DestinationRef,
           destinationName: allStopsTableFromRedux.filter(
-            (stop) => stop.id === selectedBusFromMap[0]?.MonitoredVehicleJourney?.DestinationRef
+            (stop: StopInfo) => stop?.id === selectedBusFromMap[0]?.MonitoredVehicleJourney?.DestinationRef
           ),
           currentRoute: currentRoute,
+          occupancyStatusData: vehiclePositionsData?.find(
+            (vehicle: VehiclePositionsData) => vehicle?.vehicleId === vehicleId
+          ) as VehiclePositionsData,
         };
+        // console.log("busInfoObject:", busInfoObject);
         setSelectedBus(busInfoObject);
       };
       activeBusIdsList.includes(vehicleId) ? initialAction() : notifyAction(vehicleId);
     }
-  }, [agencyId, allBuses, allRoutesTableFromRedux, allStopsTableFromRedux, navigate, t, vehicleId]);
+  }, [agencyId, allBuses, allRoutesTableFromRedux, allStopsTableFromRedux, navigate, t, vehicleId, vehiclePositionsData]);
 
   React.useEffect(() => {
     if (agencyId && selectedBus && Object.keys(selectedBus).length > 0) {
@@ -116,7 +126,8 @@ const VehicleInfo = (): JSX.Element => {
           .get(
             `${apiBaseURL}/siri/vehicle-monitoring?key=${siriApiKey}&OperatorRef=${agencyId}&VehicleRef=${vehicleRefShort}&MaximumNumberOfCallsOnwards=${maximumNumberOfCallsOnwards}&VehicleMonitoringDetailLevel=calls&TripId=${encodeURIComponent(
               blockRef as string
-            )}&type=json`
+            )}&type=json`,
+            axiosConfig
           )
           .then(({ data }) => {
             // console.log("data:", data);
@@ -177,13 +188,13 @@ const VehicleInfo = (): JSX.Element => {
     }
   }, [agencyId, dispatch, infoToDisplay, selectedBus]);
 
-  const onLineClick = async (lineNumber: string) => {
+  const onLineClick = async (lineNumber: string): Promise<void> => {
     // console.info({ lineNumber });
     await dispatch(dispatchModalInfoBottomIsOpen(true));
     await navigate(`/app/route/${lineNumber}`);
   };
 
-  const showFullName = (str: string) => {
+  const showFullName = (str: string): JSX.Element => {
     return (
       <Popover id="show_full_name">
         <Popover.Header as="h3" style={{ background: "lightblue" }}>
@@ -270,9 +281,12 @@ const VehicleInfo = (): JSX.Element => {
             </th>
           </tr>
           <tr>
+            <th colSpan={2} className="text-center">
+              {occupancyStatus ? <OccupancyStatusIcon selectedBus={selectedBus as SelectedBus} showTooltip={true} /> : null}
+            </th>
             <th
-              colSpan={3}
-              style={{ textAlign: "left", verticalAlign: "middle", fontWeight: "normal" }}
+              colSpan={1}
+              style={{ textAlign: "center", verticalAlign: "middle", fontWeight: "normal" }}
               className="th_small_padding"
             >
               <em>{selectedBus?.destinationName![0]?.name!} </em>
@@ -283,7 +297,7 @@ const VehicleInfo = (): JSX.Element => {
     );
   };
 
-  const onStopClick = async (busStop: BusInfoItem) => {
+  const onStopClick = async (busStop: BusInfoItem): Promise<void> => {
     // await console.info("busStop:", busStop);
     await dispatch(setLoadingAction(true));
     await dispatch(dispatchModalInfoBottomIsOpen(true));

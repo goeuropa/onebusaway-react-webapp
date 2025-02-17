@@ -7,8 +7,15 @@ import { shallowEqual } from "react-redux";
 import { fetchInterval, routeListButtonWidth, showDevInfo } from "../../config";
 import { dispatchModalInfoBottomIsOpen, getStopInfo, selectStop } from "../../redux/actions";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import { cutAgencyName, timeConverter, timeConverterFromNow, truncateString } from "../../utils/helpers";
+import {
+  currentOccupationBusData,
+  cutAgencyName,
+  timeConverter,
+  timeConverterFromNow,
+  truncateString,
+} from "../../utils/helpers";
 import TimeTablePart from "./TimeTablePart";
+import OccupancyStatusIcon from "../../utils/OccupancyStatusIcon";
 
 const TimeTableToday = (): JSX.Element => {
   const { t } = useTranslation();
@@ -17,23 +24,27 @@ const TimeTableToday = (): JSX.Element => {
 
   const dispatch: Dispatch = useAppDispatch();
 
-  const [stops, selectedLanguage, allRoutesTableFromRedux, agencyId, allStopsTableReduced]: [
-    ArrivalsDepartures[],
-    string,
-    RouteInfo[],
-    string,
-    StopInfo[]
-  ] = useAppSelector(
+  const [
+    stops,
+    selectedLanguage,
+    allRoutesTableFromRedux,
+    agencyId,
+    allStopsTableReduced,
+    vehiclePositionsData,
+    occupancyStatus,
+  ]: [ArrivalsDepartures[], string, RouteInfo[], string, StopInfo[], VehiclePositionsData[], boolean] = useAppSelector(
     (state: RootState) => [
       state?.stops?.arrivalsDepartures,
       state?.agency?.selectedLanguage,
       state?.allData?.allRoutesTableReduced,
       state?.agency?.agencyId,
       state?.allData?.allStopsTableReduced,
+      state?.buses?.vehiclePositionsData,
+      state?.appSettings?.occupancyStatus,
     ],
     shallowEqual
   );
-  // console.log("allRoutesTableFromRedux:", allRoutesTableFromRedux);
+  // console.log("vehiclePositionsData:", vehiclePositionsData);
 
   const [stopInfo, setStopInfo] = React.useState<ArrivalsDepartures[]>([]);
   const [selectedStop, setSelectedStop] = React.useState<StopInfo | null>(null);
@@ -109,6 +120,7 @@ const TimeTableToday = (): JSX.Element => {
               {t("Departures")}
             </th>
             {showDevInfo ? <th style={{ fontSize: "small", color: "orangered" }}>{t("Bus ID")}</th> : null}
+            {occupancyStatus ? <th style={{ fontSize: "small" }}>{t("Occupancy Status")}</th> : null}
           </tr>
         </thead>
         <tbody>
@@ -194,6 +206,19 @@ const TimeTableToday = (): JSX.Element => {
                         <th style={{ fontSize: "small", color: "orangered", fontWeight: "bold" }}>
                           {stop?.vehicleId || stop?.tripStatus?.vehicleId}
                         </th>
+                      ) : null}
+                      {occupancyStatus ? (
+                        <td>
+                          <OccupancyStatusIcon
+                            selectedBus={currentOccupationBusData(
+                              stop?.vehicleId || stop?.tripStatus?.vehicleId,
+                              vehiclePositionsData,
+                              agencyId
+                            )}
+                            showTooltip={true}
+                            placement="left"
+                          />
+                        </td>
                       ) : null}
                     </tr>
                   ) : null}

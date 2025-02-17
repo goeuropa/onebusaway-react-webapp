@@ -13,6 +13,8 @@ import TimeTableToday from "./TimeTableToday";
 import VehicleInfo from "./VehicleInfo";
 import TimeTableChangeDate from "./TimeTableChangeDate";
 import variableColors from "../../_App.module.scss";
+import useNetworkStatus from "../Services/useNetworkStatus";
+import TimeTableBoardWrapper from "./TimeTableBoardWrapper";
 
 const { primaryColor, secondaryColor } = variableColors;
 
@@ -40,6 +42,7 @@ const ButtonLinkContainer = styled.div`
 const BottomBarComponent = (): JSX.Element => {
   const { t } = useTranslation();
   const { pathname } = useLocation();
+  const { isMobile } = useNetworkStatus();
 
   const [openCollapse, setOpenCollapse] = React.useState<boolean>(false);
   const [selectedStopId, setSelectedStopId] = React.useState<string>("");
@@ -73,18 +76,18 @@ const BottomBarComponent = (): JSX.Element => {
             defaultChecked={false}
           />
 
-          {showDepartureBoardLink && pathname && pathname.includes("stop") && (
+          {!isMobile && showDepartureBoardLink && pathname && pathname.includes("stop") ? (
             <Button variant="light" size="sm" style={{ padding: 0 }}>
               <Link
                 to={`/stopIds/${selectedStopId}`}
                 rel="noopener noreferrer"
-                target="_blank"
+                target="_blank" //* Switched of + !isMobile: 2024-10-28, Switched on: 2025-02-15
                 style={{ textDecoration: "none" }}
               >
                 {t("Departure_board")}
               </Link>
             </Button>
-          )}
+          ) : null}
         </ButtonLinkContainer>
 
         <Collapse in={openCollapse}>
@@ -100,6 +103,7 @@ const BottomBarComponent = (): JSX.Element => {
             <Route path="/stop/:stop_Id" element={<TimeTableToday />} />
             <Route path="/vehicle/:vehicleId" element={<VehicleInfo />} />
             <Route path="/date/:timetableDate/stop/:stop_Id" element={<TimeTableChangeDate />} />
+            <Route path="/boardDate/:timetableDate/stop/:stop_Id" element={<TimeTableBoardWrapper />} />
 
             <Route path="*" element={<Navigate to="/not_found" />} />
           </Routes>

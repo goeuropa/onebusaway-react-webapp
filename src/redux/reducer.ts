@@ -4,6 +4,7 @@ import {
   ACTIVE_STOP,
   DISPATCH_MODAL_INFO_BOTTOM,
   DISPATCH_MODAL_SETTINGS,
+  DISPATCH_OCCUPANCY_STATUS,
   DISPATCH_ZOOM,
   FETCH_DIRECTIONS,
   FETCH_ID,
@@ -13,14 +14,17 @@ import {
   GET_ALL_POLYLINES_STOPS,
   GET_LINES_LIST,
   GET_LOCALE,
+  GET_OCCUPANCY_STATUS,
   GET_POLYLINES_STOPS,
   SELECT_ROUTE,
   SELECT_STOP,
+  SET_ALL_ROUTES_STOPS,
   SET_GRAYSCALE_MAP,
   SET_LOADING,
   SHOW_LIVE_BUSES,
   SHOW_SCHEDULED_BUSES,
 } from "./actionTypes";
+import { showAllRoutesStopsSettings, urlGTFS_RT_OccupancyData } from "../config";
 
 const initialState: RootState = {};
 
@@ -63,7 +67,9 @@ const getPolylines_Stops = function (state = initialState, action: Dispatch) {
 const getBuses = function (state = initialState, action: Dispatch) {
   switch (action.type) {
     case GET_ACTIVE_BUSES:
-      return { ...action.payload };
+      return { ...state, ...action.payload };
+    case GET_OCCUPANCY_STATUS:
+      return { ...state, ...action.payload };
 
     default:
       return state;
@@ -149,8 +155,9 @@ const appSettings = function (
     ...initialState,
     isModalSettingsOpen: false,
     showLiveBuses: true,
-    showScheduledBuses: true,
     grayscaleMap: false,
+    setAllRoutesStops: showAllRoutesStopsSettings,
+    occupancyStatus: urlGTFS_RT_OccupancyData ? true : false,
   },
   action: Dispatch
 ) {
@@ -164,6 +171,10 @@ const appSettings = function (
     case SHOW_SCHEDULED_BUSES:
       return { ...state, ...action.payload };
     case SET_GRAYSCALE_MAP:
+      return { ...state, ...action.payload };
+    case SET_ALL_ROUTES_STOPS:
+      return { ...state, ...action.payload };
+    case DISPATCH_OCCUPANCY_STATUS:
       return { ...state, ...action.payload };
 
     default:
