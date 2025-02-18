@@ -27,6 +27,7 @@ There is a config file for a few agencies.
 - Earth maps are provided by [OpenStreetMap](https://www.openstreetmap.org).
 - [i18next](https://www.i18next.com) is used to handle translations.
 - [Turf.js](https://turfjs.org) is used for spatial calculations.
+- [Gtfs-realtime-bindings](https://www.npmjs.com/package/gtfs-realtime-bindings) is used for decoding GTFS-RT data.
 - Some icons were taken from [IconFinder](https://www.iconfinder.com).
 
 ## Getting Started and Deployment
@@ -35,7 +36,7 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 
 1. You must have [node.js](https://nodejs.org/en) installed.
 2. Once you download the repository, you need install the dependencies with the command: `npm ci`.
-3. Choose the right configuration for your agency: copy `env.example` to `.env` and edit the `.env` file to set an app name, API key, and API server URL. More configuration options are available in `config.ts`.
+3. Choose the right configuration for your agency, file: **_config.ts_**
 4. Then you can run: `npm start` or do build: `npm run build`.
 5. Finally, there's deployment. Follow this [instruction](https://create-react-app.dev/docs/deployment)
 
@@ -46,8 +47,10 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 3. Stop view for today (right now) - route ends with <code>/app/stop/**_[stopId]_**</code>, e.g. `/app/stop/1211_399`
 4. Stop view for other day (timetable) - route ends with <code>/app/date/**_[selectedDate]_**/stop/**_[stopId]_**</code>,
    e.g. `/app/date/2023-04-04/stop/1211_399`
-5. Vehicle view - route ends with <code>/app/vehicle/**_[vehicleId]_**</code>, e.g. `/app/vehicle/359633108368049`
-6. Timetable view - route ends with <code>/stopIds/**_[stopId,stopId,stopId]_**</code>, e.g.
+5. Timetable board view for other day - route ends with <code>/app/boardDate/**_[selectedDate]_**/stop/**_[stopId]_**</code>,
+   e.g. `/app/boardDate/2024-10-04/stop/1211_399-4`
+6. Vehicle view - route ends with <code>/app/vehicle/**_[vehicleId]_**</code>, e.g. `/app/vehicle/359633108368049`
+7. Timetable view - route ends with <code>/stopIds/**_[stopId,stopId,stopId]_**</code>, e.g.
    `/stopIds/1211_48,1211_389,1211_999`
 
 ## License
